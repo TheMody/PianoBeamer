@@ -8,8 +8,10 @@ class piano_ds(torch.utils.data.Dataset):
         self.images = []
         self.masks = []
         for file in os.listdir(path + "images"):
-            self.images.append(os.path.join(path+ "images", file))
-            self.masks.append(os.path.join(path+ "masks", file))
+            if file.endswith('.png'):
+                # Assuming the mask has the same name as the image but in the masks directory
+                self.images.append(os.path.join(path+ "images", file))
+                self.masks.append(os.path.join(path+ "masks", file))
 
 
     def __len__(self):
