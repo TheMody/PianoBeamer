@@ -48,9 +48,9 @@ def main(json_path, out_path):
 
 if __name__ == "__main__":
     path = "data/"
-    for file in os.listdir(path + "jsons"):
+    for file in os.listdir(path + "images"):
         if file.endswith('.json'):
-            json_file = os.path.join(path + "jsons", file)
+            json_file = os.path.join(path + "images", file)
             mask_file = os.path.join(path + "masks", file.replace('.json', '.png'))
             Path(mask_file).parent.mkdir(parents=True, exist_ok=True)
             main(json_file, mask_file)
