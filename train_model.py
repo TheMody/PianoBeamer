@@ -47,26 +47,9 @@ from torch.utils.data import Dataset, DataLoader
 from transformers import (Mask2FormerForUniversalSegmentation,
                           Mask2FormerImageProcessor, Trainer,
                           TrainingArguments, default_data_collator)
+from model import custom_model
+from vis_tools import visualize_prediction
 
-
-def visualize_prediction(image, mask, pred_mask):
-    """Visualizes the original image, ground truth mask, and predicted mask."""
-    image = image + np.min(image)
-    image = image / np.max(image) 
-
-    mask = np.logical_not(mask)  # Invert mask to visualize as white on black
-    pred_mask = np.logical_not(pred_mask)  # Invert predicted mask
-    image[:,:,0] = image[:, :, 0] + mask 
-    image[:,:,1] = image[:, :, 1] + pred_mask 
-    image = image / np.max(image)  # Normalize to [0, 1] for visualization
-    # Convert to uint8 for visualization
-    image = (image * 255).astype(np.uint8)
-    #save img with PIL
-   # maskvis = np.zeros_like(image) 
-   # maskvis[:,:,0] = mask*255
-
-    img = Image.fromarray(image)
-    img.save("image.png")
 
 def get_file_pairs(split_dir: Path) -> List[Tuple[Path, Path]]:
     img_dir = split_dir / "images"
@@ -153,23 +136,6 @@ class SegmentationDataset(Dataset):
         return enc
 
 
-class custom_model(torch.nn.Module):
-    def __init__(self, model_name, num_classes, processor):
-        super(custom_model, self).__init__()
-        self.model = Mask2FormerForUniversalSegmentation.from_pretrained(
-            model_name,
-            num_labels=num_classes,
-            ignore_mismatched_sizes=True,
-        )
-        self.processor = processor
-        self.linear = torch.nn.Linear(self.model.config.hidden_size, num_classes)
-
-    def forward(self, pixel_values):
-        outputs = self.model(pixel_values=pixel_values).pixel_decoder_last_hidden_state
-        outputs = self.linear(outputs.permute(0, 2, 3, 1)).permute(0, 3, 1, 2)
-        outputs = torchvision.transforms.Resize(pixel_values.shape[2:])(outputs)
-        return outputs
-
 def parse_args():
     ap = argparse.ArgumentParser()
    # ap.add_argument("--data_root", type=Path, default = "data/", help="Dataset root dir")
@@ -194,14 +160,7 @@ def train_one_epoch(model, dataloader, optimizer, scaler, device, ignore_index):
 
         mask_labels = batch["mask_labels"].squeeze(1).long().to(device)
 
-      #  print(mask_labels)
-
-       # print(batch["image"][0].shape)
-       # visualize_prediction(batch["image"][0].cpu().numpy(), mask_labels[0].cpu().numpy(), np.zeros_like(mask_labels[0].cpu().numpy()))
-
         with torch.cuda.amp.autocast(enabled=scaler is not None):
-    
-
             outputs = model(pixel_values=pixel_values)
             loss = criterion(outputs, mask_labels)  # CrossEntropyLoss expects (N, C, H, W) and (N, H, W)
         if scaler is None:
@@ -264,7 +223,7 @@ def main():
 
     # 1. Load processor & model ------------------------------------------------
     processor = Mask2FormerImageProcessor.from_pretrained(args.model_name, reduce_labels=False)
-    model = custom_model(args.model_name, args.num_classes, processor).to(args.device)
+    model = custom_model( processor).to(args.device)
 
 
     image_processor = Mask2FormerImageProcessor.from_pretrained(
