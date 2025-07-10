@@ -37,6 +37,7 @@ import os
 from pathlib import Path
 from typing import Dict, List, Tuple
 
+import torchvision
 from tqdm import tqdm
 import albumentations as A
 import numpy as np
@@ -47,17 +48,25 @@ from transformers import (Mask2FormerForUniversalSegmentation,
                           Mask2FormerImageProcessor, Trainer,
                           TrainingArguments, default_data_collator)
 
-def pixel_accuracy(preds: torch.Tensor, labels: torch.Tensor) -> float:
-    """Compute pixel‑wise accuracy, ignoring IGNORE_INDEX."""
 
-    mask = labels != IGNORE_INDEX
-    if mask.sum() == 0:
-        return 0.0
-    correct = ((preds == labels) & mask).sum().item()
-    total = mask.sum().item()
-    return correct / total
+def visualize_prediction(image, mask, pred_mask):
+    """Visualizes the original image, ground truth mask, and predicted mask."""
+    image = image + np.min(image)
+    image = image / np.max(image) 
 
+    mask = np.logical_not(mask)  # Invert mask to visualize as white on black
+    pred_mask = np.logical_not(pred_mask)  # Invert predicted mask
+    image[:,:,0] = image[:, :, 0] + mask 
+    image[:,:,1] = image[:, :, 1] + pred_mask 
+    image = image / np.max(image)  # Normalize to [0, 1] for visualization
+    # Convert to uint8 for visualization
+    image = (image * 255).astype(np.uint8)
+    #save img with PIL
+   # maskvis = np.zeros_like(image) 
+   # maskvis[:,:,0] = mask*255
 
+    img = Image.fromarray(image)
+    img.save("image.png")
 
 def get_file_pairs(split_dir: Path) -> List[Tuple[Path, Path]]:
     img_dir = split_dir / "images"
@@ -104,6 +113,7 @@ class SegmentationDataset(Dataset):
                     ),
                     A.HorizontalFlip(p=0.5),
                     A.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2),
+                    A.Rotate(limit=30, p=0.5),
                 ],
                 additional_targets={"mask": "mask"},
             )
@@ -139,28 +149,31 @@ class SegmentationDataset(Dataset):
         # The processor returns 'class_labels' (instance‑level). For semantic
         # segmentation we only need pixel_label_ids.
         #enc["labels"] = enc.pop("mask_labels")
+        enc["image"] = augmented["image"]
         return enc
 
 
 class custom_model(torch.nn.Module):
-    def __init__(self, model_name, num_classes):
+    def __init__(self, model_name, num_classes, processor):
         super(custom_model, self).__init__()
         self.model = Mask2FormerForUniversalSegmentation.from_pretrained(
             model_name,
             num_labels=num_classes,
             ignore_mismatched_sizes=True,
         )
+        self.processor = processor
         self.linear = torch.nn.Linear(self.model.config.hidden_size, num_classes)
 
     def forward(self, pixel_values):
         outputs = self.model(pixel_values=pixel_values).pixel_decoder_last_hidden_state
-        outputs = outputs.reshape( outputs.shape[0], pixel_values.shape[1],pixel_values.shape[2], outputs.shape[-1])  # batch_size, seq_len, hidden_size
+        outputs = self.linear(outputs.permute(0, 2, 3, 1)).permute(0, 3, 1, 2)
+        outputs = torchvision.transforms.Resize(pixel_values.shape[2:])(outputs)
         return outputs
 
 def parse_args():
     ap = argparse.ArgumentParser()
    # ap.add_argument("--data_root", type=Path, default = "data/", help="Dataset root dir")
-    ap.add_argument("--model_name", type=str, default="facebook/mask2former-swin-base-ade-semantic")
+    ap.add_argument("--model_name", type=str, default="facebook/mask2former-swin-base-IN21k-ade-semantic")
     ap.add_argument("--output_dir", type=Path, default="./checkpoints")
     ap.add_argument("--batch_size", type=int, default=4)
     ap.add_argument("--num_epochs", type=int, default=25)
@@ -178,13 +191,19 @@ def train_one_epoch(model, dataloader, optimizer, scaler, device, ignore_index):
     loop = tqdm(dataloader, leave=False, desc="Train")
     for batch in loop:
         pixel_values = batch["pixel_values"].to(device)
-        mask_labels = batch["mask_labels"].to(device)
+
+        mask_labels = batch["mask_labels"].squeeze(1).long().to(device)
+
+      #  print(mask_labels)
+
+       # print(batch["image"][0].shape)
+       # visualize_prediction(batch["image"][0].cpu().numpy(), mask_labels[0].cpu().numpy(), np.zeros_like(mask_labels[0].cpu().numpy()))
 
         with torch.cuda.amp.autocast(enabled=scaler is not None):
-            outputs = model(pixel_values=pixel_values)
-            print(outputs.shape)
-            loss = criterion(outputs, mask_labels)
+    
 
+            outputs = model(pixel_values=pixel_values)
+            loss = criterion(outputs, mask_labels)  # CrossEntropyLoss expects (N, C, H, W) and (N, H, W)
         if scaler is None:
             loss.backward()
         else:
@@ -199,10 +218,9 @@ def train_one_epoch(model, dataloader, optimizer, scaler, device, ignore_index):
 
         running_loss += loss.item() * pixel_values.size(0)
 
-        preds = outputs.logits.argmax(1)
-        mask = mask_labels != ignore_index
-        running_acc_correct += ((preds == mask_labels) & mask).sum().item()
-        running_acc_pixels += mask.sum().item()
+        preds = outputs.argmax(1)
+        running_acc_correct += (preds == mask_labels).sum().item()
+        running_acc_pixels += mask_labels.shape[0] * mask_labels.shape[1] * mask_labels.shape[2]
 
         loop.set_postfix(loss=loss.item())
 
@@ -213,18 +231,25 @@ def train_one_epoch(model, dataloader, optimizer, scaler, device, ignore_index):
 
 def evaluate(model, dataloader, device, ignore_index):
     model.eval()
+    criterion = torch.nn.CrossEntropyLoss(ignore_index=ignore_index)
     running_loss, running_acc_pixels, running_acc_correct = 0.0, 0, 0
     with torch.no_grad():
         for batch in tqdm(dataloader, leave=False, desc="Val"):
             pixel_values = batch["pixel_values"].to(device)
-            mask_labels = batch["mask_labels"].to(device)
-            outputs = model(pixel_values=pixel_values, mask_labels=mask_labels)
-            running_loss += outputs.loss.item() * pixel_values.size(0)
+            mask_labels = batch["mask_labels"].squeeze(1).long().to(device)
+            outputs = model(pixel_values=pixel_values)
+            loss = criterion(outputs, mask_labels)  
+            running_loss += loss.item() * pixel_values.size(0)
 
-            preds = outputs.logits.argmax(1)
+            preds = outputs.argmax(1)
             mask = mask_labels != ignore_index
-            running_acc_correct += ((preds == mask_labels) & mask).sum().item()
-            running_acc_pixels += mask.sum().item()
+            running_acc_correct += (preds == mask_labels) .sum().item()
+            running_acc_pixels += mask_labels.shape[0] * mask_labels.shape[1] * mask_labels.shape[2]
+
+            #visualize some random prediction 
+        random_label = np.random.randint(0, mask_labels.shape[0])
+        visualize_prediction(batch["image"][random_label].cpu().numpy(), mask_labels[random_label].cpu().numpy(), preds[random_label].cpu().numpy())
+
 
     avg_loss = running_loss / len(dataloader.dataset)
     avg_acc = running_acc_correct / running_acc_pixels if running_acc_pixels else 0
@@ -239,15 +264,13 @@ def main():
 
     # 1. Load processor & model ------------------------------------------------
     processor = Mask2FormerImageProcessor.from_pretrained(args.model_name, reduce_labels=False)
-    model = custom_model(args.model_name, args.num_classes).to(args.device)
+    model = custom_model(args.model_name, args.num_classes, processor).to(args.device)
 
 
     image_processor = Mask2FormerImageProcessor.from_pretrained(
         args.model_name,
         reduce_labels=False,  # Keep 0 … num_classes‑1
     )
-
-    # Replace classifier (for fine‑tuning), if needed
 
     train_ds = SegmentationDataset( image_processor,train = True, aug=True)
     val_ds = SegmentationDataset( image_processor, train = False, aug=False)
@@ -281,20 +304,20 @@ def main():
         train_loss, train_acc = train_one_epoch(model, train_loader, optimizer, scaler, args.device, args.ignore_index)
         print(f"Train   | loss: {train_loss:.4f}  acc: {train_acc:.4f}")
 
-        if epoch % args.val_interval == 0 or epoch == args.num_epochs:
-            val_loss, val_acc = evaluate(model, val_loader, args.device, args.ignore_index)
-            print(f"Val     | loss: {val_loss:.4f}  acc: {val_acc:.4f}")
+       
+        val_loss, val_acc = evaluate(model, val_loader, args.device, args.ignore_index)
+        print(f"Val     | loss: {val_loss:.4f}  acc: {val_acc:.4f}")
 
-            # Save best checkpoint
-            if val_acc > best_val_acc:
-                best_val_acc = val_acc
-                ckpt_path = args.output_dir / "best_model.pth"
-                torch.save({
-                    "model_state_dict": model.state_dict(),
-                    "processor": processor.to_json_string(),
-                    "val_acc": val_acc,
-                }, ckpt_path)
-                print(f"✅ Saved new best model to {ckpt_path} (acc={val_acc:.4f})")
+        # Save best checkpoint
+        if val_acc > best_val_acc:
+            best_val_acc = val_acc
+            ckpt_path = args.output_dir / "best_model.pth"
+            torch.save({
+                "model_state_dict": model.state_dict(),
+                "processor": processor.to_json_string(),
+                "val_acc": val_acc,
+            }, ckpt_path)
+            print(f"✅ Saved new best model to {ckpt_path} (acc={val_acc:.4f})")
 
     print(f"Training finished. Best val acc: {best_val_acc:.4f}")
 
