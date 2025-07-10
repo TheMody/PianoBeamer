@@ -1,0 +1,36 @@
+{
+  "version": "5.8.2",
+  "flags": {},
+  "shapes": [
+    {
+      "label": "keyboard",
+      "points": [
+        [
+          325.42857142857144,
+          437.57142857142856
+        ],
+        [
+          306.67857142857144,
+          578.6428571428571
+        ],
+        [
+          1180.7857142857142,
+          576.8571428571428
+        ],
+        [
+          1153.1071428571427,
+          433.1071428571429
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "polygon",
+      "flags": {},
+      "mask": null
+    }
+  ],
+  "imagePath": "image_30.png",
+  "imageData": null,
+  "imageHeight": 768,
+  "imageWidth": 1408
+}
