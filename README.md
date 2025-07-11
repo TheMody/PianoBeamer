@@ -8,6 +8,9 @@ Current status:
 ![Keyboard Detection](images/first_result.png)
 
 -Project Marker Image and detect Markers - Done
+
 -Transformer between keyboard space and image space - TODO
+
 -Create a virtual keyboard, with each button individually colorable
+
 -Read in Music
