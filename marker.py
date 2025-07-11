@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 import cv2.aruco as aruco
-
+from config import *
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 1)  Create an image that shows FOUR ArUco markers—one in every corner
@@ -9,9 +9,9 @@ import cv2.aruco as aruco
 def create_four_marker_image(
         dict_name: int = aruco.DICT_4X4_50,
         marker_ids: tuple[int, int, int, int] = (0, 1, 2, 3),
-        marker_px: int = 120,          # side length of each marker, in pixels
-        border_px: int = 25,           # white border around every marker
-        canvas_size: tuple[int, int] = (600, 600)  # (height, width)
+        marker_px: int = marker_px,          # side length of each marker, in pixels
+        border_px: int = border_px,           # white border around every marker
+        canvas_size: tuple[int, int] = (b_height, b_width)  # (height, width)
 ) -> np.ndarray:
     """
     Returns a BGR image (uint8) containing four unique ArUco markers
@@ -57,6 +57,7 @@ def create_four_marker_image(
 # ─────────────────────────────────────────────────────────────────────────────
 def detect_four_markers(
         image: np.ndarray,
+        background_img: np.ndarray | None = None,
         dict_name: int = aruco.DICT_4X4_50,
         expected_ids: set[int] | None = None,
         refine_subpix: bool = True
@@ -77,7 +78,38 @@ def detect_four_markers(
     detector = aruco.ArucoDetector(aruco_dict, det_params)
 
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    corners, ids, _ = detector.detectMarkers(gray)
+
+    # cv2.imshow("Gray Image", gray)
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
+
+    if background_img is not None:
+        # Subtract background image if provided
+        gray = gray.astype(float)
+        bg_gray = cv2.cvtColor(background_img, cv2.COLOR_BGR2GRAY)#.astype(float)
+
+
+        cv2.imshow("background Image", bg_gray)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
+
+        gray = np.clip(gray - bg_gray, 0, 255) 
+        #add some gaussian blur
+        gray = cv2.GaussianBlur(gray, (5, 5), 0)
+
+        gray = gray - np.min(gray)  # Ensure no negative values
+        gray = (gray / np.max(gray) * 255).astype(np.uint8)  # Normalize to 0-255
+        
+    
+    # cv2.imshow("Gray Image", gray)
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
+
+
+   # gray = cv2.equalizeHist(gray)
+    
+    corners, ids, _ = detector.detectMarkers(gray.astype(np.uint8))
 
     if ids is None:
         raise ValueError("No ArUco markers detected at all.")
@@ -99,8 +131,34 @@ def detect_four_markers(
                 criteria=(cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER,
                           30, 1e-4)
             )
-        cx, cy = pts.mean(axis=0)
+        #cx, cy = pts.mean(axis=0)
+
+        if m_id == 0:
+            cx,cy = pts[0]
+        elif m_id == 1:
+            cx,cy = pts[1]
+        elif m_id == 2:
+            cx,cy = pts[2]
+        elif m_id == 3:
+            cx,cy = pts[3]
+
         centres[int(m_id)] = (float(cx), float(cy))
+
+    for i in range(len(centres)):
+        centres[i] = np.asarray(centres[i])
+
+    #TODO need to correct for boundary region. Region is needed for the detection algorithm
+    centres[0][0] = centres[0][0] + border_px*(centres[0][0]-centres[1][0])/b_width
+    centres[0][1] = centres[0][1] + border_px*(centres[0][1]-centres[3][1])/b_height
+
+    centres[1][0] = centres[1][0] + border_px*(centres[1][0]-centres[0][0])/b_width
+    centres[1][1] = centres[1][1] + border_px*(centres[1][1]-centres[2][1])/b_height
+
+    centres[2][0] = centres[2][0] + border_px*(centres[2][0]-centres[3][0])/b_width
+    centres[2][1] = centres[2][1] + border_px*(centres[2][1]-centres[1][1])/b_height
+
+    centres[3][0] = centres[3][0] + border_px*(centres[3][0]-centres[2][0])/b_width
+    centres[3][1] = centres[3][1] + border_px*(centres[3][1]-centres[0][1])/b_height
 
     return centres
 
@@ -108,12 +166,12 @@ def detect_four_markers(
 if __name__ == "__main__":
     # Create an image with four markers
     img = create_four_marker_image()
-    cv2.imwrite("four_markers.png", img)
-    cv2.imshow("Four Markers", img)
-    cv2.waitKey(0)
+    cv2.imwrite("images/four_markers.png", img)
+    # cv2.imshow("Four Markers", img)
+    # cv2.waitKey(0)
 
     # Detect the markers in the created image
     detected_centres = detect_four_markers(img)
     print("Detected marker centres:", detected_centres)
 
-    cv2.destroyAllWindows()
+   # cv2.destroyAllWindows()

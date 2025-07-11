@@ -2,7 +2,9 @@ import cv2
 import numpy as np
 from identify_img import detect_keyboard
 import math
-from marker import detect_four_markers, create_four_marker_image
+from marker import detect_four_markers
+from keyboard_vis_cv import PianoKeyboardCV
+from config import *
 
 def detect_keyboard_and_postprocess(image):
     # detects a keyboard from an overhead view as best as possible
@@ -66,7 +68,7 @@ def detect_keyboard_and_postprocess(image):
 
 if __name__ == "__main__":
     # Load an image
-    image = cv2.imread('images/challenging_example.png')
+    image = cv2.imread('images/example.jpg')
     marker_img = cv2.imread('images/four_markers.png')
     # rescale image to a reasonable size
     if image is None:
@@ -79,14 +81,17 @@ if __name__ == "__main__":
         keyboard_contour = detect_keyboard_and_postprocess(image)
 
         #add marker image to example
-      #  marker_img = cv2.resize(marker_img, (image.shape[1], image.shape[0]))
+        marker_img = cv2.resize(marker_img, (int(image.shape[1]*0.9), int(image.shape[0]*0.9)))
         # Overlay the marker image on the original image
         combined_image = image.copy()
-        offset = (0,250)
+        combined_image = combined_image.astype(np.float32)  # Convert to float32 for blending
+        offset = (50,50)
         combined_image[offset[0]:offset[0]+marker_img.shape[0], offset[1]:offset[1]+marker_img.shape[1]] = combined_image[offset[0]:offset[0]+marker_img.shape[0], offset[1]:offset[1]+marker_img.shape[1]]*0.5 + marker_img*0.5
+
+        combined_image = np.clip(combined_image, 0, 255)  # Ensure pixel values are within valid range
         #display image
 
-        corners = detect_four_markers(combined_image, expected_ids={0, 1, 2, 3})
+        corners = detect_four_markers(combined_image)#,background_img=image*0.9)
 
         pt1, pt2, pt3, pt4 = keyboard_contour
 
@@ -97,21 +102,66 @@ if __name__ == "__main__":
 
      #   cv2.imwrite("output_image.png", image)
 
-        cpt1, cpt2, cpt3, cpt4 = corners[0], corners[1], corners[2], corners[3]
-        cpt1 = tuple(map(int, cpt1))
-        cpt2 = tuple(map(int, cpt2))
-        cpt3 = tuple(map(int, cpt3))
-        cpt4 = tuple(map(int, cpt4))
+        cpt1, cpt2, cpt3, cpt4 = corners[0], corners[1], corners[2], corners[3] #(top-left, top-right, bottom-right, bottom-left)
+        cpt1 = np.asarray(tuple(map(int, cpt1)))
+        cpt2 = np.asarray(tuple(map(int, cpt2)))
+        cpt3 = np.asarray(tuple(map(int, cpt3)))
+        cpt4 = np.asarray(tuple(map(int, cpt4)))
 
         cv2.line(image, cpt1, cpt2, (0,0,255), 3, cv2.LINE_AA)
         cv2.line(image, cpt2, cpt3, (0,0,255), 3, cv2.LINE_AA)
         cv2.line(image, cpt3, cpt4, (0,0,255), 3, cv2.LINE_AA)
         cv2.line(image, cpt4, cpt1, (0,0,255), 3, cv2.LINE_AA)
 
+        #first warp keyboard points into beamer perspective
+        #calculate transfrom from camera coordinates to beamer coordinates
+        
+        #first shift coordinates to origin of cpt1
+        pt1 = pt1 - cpt1
+        pt2 = pt2 - cpt1
+        pt3 = pt3 - cpt1
+        pt4 = pt4 - cpt1
+
+        #calculate the basis vectors for the beamer coordinates
+        first_basis_vector = np.asarray(cpt2-cpt1) 
+        first_basis_vector = first_basis_vector / np.linalg.norm(first_basis_vector) * (b_width / np.linalg.norm(first_basis_vector))
+        second_basis_vector = np.asarray(cpt4-cpt1) 
+        second_basis_vector = second_basis_vector /np.linalg.norm(second_basis_vector)  * (b_height/np.linalg.norm(second_basis_vector))
+
+        newpt1 = (pt1 @ first_basis_vector , pt1 @ second_basis_vector)
+        newpt2 = (pt2 @ first_basis_vector , pt2 @ second_basis_vector)
+        newpt3 = (pt3 @ first_basis_vector , pt3 @ second_basis_vector)
+        newpt4 = (pt4 @ first_basis_vector , pt4 @ second_basis_vector) 
+
+        #these are the coordinates for the beamer to display the keyboard
+
+        #get piano img
+        kb = PianoKeyboardCV().img
+        src_quad = np.array([[0,0], [kb.shape[1], 0], [kb.shape[1], kb.shape[0]], [0, kb.shape[0]]], dtype=np.float32)
+        dst_quad = np.array([newpt1, newpt2, newpt3, newpt4], dtype=np.float32)
+        H = cv2.getPerspectiveTransform(src_quad, dst_quad)
+        h, w = kb.shape[:2]
+        kb_new = np.zeros((b_height, b_width, 3), dtype=np.uint8)  # Create a blank image for the keyboard
+        kb_new[:h, :w] = kb
+        display_img = cv2.warpPerspective(kb_new, H, (b_width, b_height))
+
+        cv2.imshow("Source", display_img )  # Show the original image with the mask overlayed
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
+        # mask = np.zeros((h, w), dtype=np.uint8)
+        # cv2.fillConvexPoly(mask, dst_quad.astype(int), 255)
+
+        # composited = frame.copy()
+        # composited[mask == 255] = warped[mask == 255]
+        # print(kb.shape)
+
+      #  print("New points:", newpt1, newpt2, newpt3, newpt4)
+
         cv2.imshow("Source", image )  # Show the original image with the mask overlayed
         cv2.waitKey(0)
         cv2.destroyAllWindows()
-        print("Detected corners:", corners)
+      #  print("Detected corners:", corners)
 
 
     
