@@ -154,7 +154,8 @@ class custom_model(torch.nn.Module):
 
     def forward(self, pixel_values):
         outputs = self.model(pixel_values=pixel_values).pixel_decoder_last_hidden_state
-        outputs = outputs.reshape( outputs.shape[0], pixel_values.shape[1],pixel_values.shape[2], outputs.shape[-1])  # batch_size, seq_len, hidden_size
+        print(outp)
+        outputs = outputs.reshape( outputs.shape[0], pixel_values.shape[2],pixel_values.shape[3], outputs.shape[-1])  # batch_size, seq_len, hidden_size
         return outputs
 
 def parse_args():
