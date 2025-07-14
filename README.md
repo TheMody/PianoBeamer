@@ -9,8 +9,8 @@ Current status:
 
 -Project Marker Image and detect Markers - Done
 
--Transformer between keyboard space and image space - TODO
+-Transformer between keyboard space and image space - Done
 
--Create a virtual keyboard, with each button individually colorable
+-Create a virtual keyboard, with each button individually colorable - Done - maybe too slow
 
 -Read in Music
