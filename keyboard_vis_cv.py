@@ -197,7 +197,11 @@ def extract_events(mf: mido.MidiFile) -> List[NOTE_EVENT]:
     ppq = mf.ticks_per_beat
     tempo = 500_000                           # default 120 BPM
     abs_ticks = 0
-    abs_time = LEADTIME_SONG
+    # for i in range(len(track)):
+    #     if track[i].type == 'note_on':
+    #         initial_time = tick_to_sec(track[0].time, tempo, ppq) makes problems due to time and rythm maybe not setting correctly
+    initial_time = tick_to_sec(track[0].time, tempo, ppq)
+    abs_time = LEADTIME_SONG - initial_time
     events: List[NOTE_EVENT] = []
 
     for msg in track:
