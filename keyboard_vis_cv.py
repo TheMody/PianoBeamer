@@ -19,15 +19,13 @@ import numpy as np
 import re
 from config import *
 
-# ──────────────────────────────────────────────────────────────────────────────
-#  PianoKeyboardCV  (unchanged except for a small public reset() helper)
-# ──────────────────────────────────────────────────────────────────────────────
+
 class PianoKeyboardCV:
     """
     Draw an 88-key (or shorter) piano keyboard with OpenCV.
     Each key can be recoloured individually by MIDI number or note name.
     """
-
+    WINNAME = 'Piano'
 
     # white-key MIDI remainders
     _WHITE_SET = (0, 2, 4, 5, 7, 9, 11)
@@ -56,13 +54,7 @@ class PianoKeyboardCV:
         self.colours = dict(self._default_colours)
         self._build_white_x()
         self._render()
-        winname = 'Piano'
-        cv2.namedWindow(winname, cv2.WINDOW_NORMAL)          # create once, before first imshow
-        cv2.setWindowProperty(winname,
-                      cv2.WND_PROP_FULLSCREEN,
-                      cv2.WINDOW_FULLSCREEN)  
 
-    # public helpers -----------------------------------------------------------
     def reset_colours(self):
         """Revert all keys to their default white/black."""
         self.colours = dict(self._default_colours)
@@ -78,9 +70,9 @@ class PianoKeyboardCV:
                 self.colours[midi] = self._parse_colour(colour)
         self._render()
 
-    def show(self, winname='Piano', wait_ms: int = 1) -> bool:
+    def show(self, wait_ms: int = 1) -> bool:
         """Display and return *True* if user pressed Esc."""
-        cv2.imshow(winname, self.img)
+        cv2.imshow(PianoKeyboardCV.WINNAME, self.img)
         key = cv2.waitKey(wait_ms) & 0xFF
         return key == 27                                 # Esc quits
 
@@ -199,7 +191,7 @@ def extract_events(mf: mido.MidiFile) -> List[NOTE_EVENT]:
     ppq = mf.ticks_per_beat
     tempo = 500_000                           # default 120 BPM
     abs_ticks = 0
-    abs_time = 0.0
+    abs_time = LEADTIME_SONG
     events: List[NOTE_EVENT] = []
 
     for msg in track:
@@ -229,74 +221,79 @@ RED   = (0,   0, 255)
 
 
 
-def animate(events, keyboard, lookahead=0.5, window_name='Piano'):
+def animate(events, keyboard, lookahead=0.5,playback_speed = 0.5, window_name='Piano'):
     """
     Realtime visualiser
         • GREEN – notes currently sounding
         • RED   – upcoming Note-On events (< lookahead s) with opacity proportional
                   to 1 – (Δt / lookahead).
     """
-    t_start = time.time()
-    idx, n_events = 0, len(events)
-    active: set[int] = set()
 
-    while True:
-        
-        t_last = time.time()
-        now = time.time() - t_start
+    try:
+        t_start = time.time()
+        idx, n_events = 0, len(events)
+        active: set[int] = set()
+        cv2.namedWindow(PianoKeyboardCV.WINNAME, cv2.WINDOW_NORMAL)          # create once, before first imshow
+        cv2.setWindowProperty(PianoKeyboardCV.WINNAME,
+                        cv2.WND_PROP_FULLSCREEN,
+                        cv2.WINDOW_FULLSCREEN)  
+        while True:
+            t_last = time.time()
+            now = time.time() - t_start
+            now *= playback_speed                      # speed up / slow down
 
-        # ── 1. consume due events ────────────────────────────────────────────
-        while idx < n_events and events[idx][0] <= now:
-            _, note, is_on = events[idx]
-            (active.add if is_on else active.discard)(note)
-            idx += 1
+            # ── 1. consume due events ────────────────────────────────────────────
+            while idx < n_events and events[idx][0] <= now:
+                _, note, is_on = events[idx]
+                (active.add if is_on else active.discard)(note)
+                idx += 1
 
-        # ── 2. collect upcoming events & their Δt ────────────────────────────
-        upcoming: dict[int, float] = {}           # note → seconds until start
-        j = idx
-        while j < n_events and (events[j][0] - now) <= lookahead:
-            t_ev, note, is_on = events[j]
-            if is_on and note not in active:
-                delta = t_ev - now
-                # keep the *soonest* Note-On if the note appears twice in window
-                upcoming[note] = min(delta, upcoming.get(note, lookahead))
-            j += 1
+            # ── 2. collect upcoming events & their Δt ────────────────────────────
+            upcoming: dict[int, float] = {}           # note → seconds until start
+            j = idx
+            while j < n_events and (events[j][0] - now) <= lookahead:
+                t_ev, note, is_on = events[j]
+                if is_on and note not in active:
+                    delta = t_ev - now
+                    # keep the *soonest* Note-On if the note appears twice in window
+                    upcoming[note] = min(delta, upcoming.get(note, lookahead))
+                j += 1
 
-        # ── 3. colour mapping ───────────────────────────────────────────────
-        keyboard.reset_colours()
+            # ── 3. colour mapping ───────────────────────────────────────────────
+            keyboard.reset_colours()
 
-        # upcoming: blend default colour with red, opacity grows as Δt → 0
-        for note, delta in upcoming.items():
-            ratio = 1.0 - (delta / lookahead)        # 0 (far) … 1 (imminent)
-            # default = keyboard._default_colours.get(
-            #     note,
-            #     (255, 255, 255) if keyboard._is_white(note) else (0, 0, 0)
-            # )
-            default = (0,0,0)
-            red_pixel = (0, 0, 255)
-            blended = tuple(
-                int((1 - ratio) * d + ratio * r) for d, r in zip(default, red_pixel)
-            )
-            keyboard.colours[note] = blended
+            # upcoming: blend default colour with red, opacity grows as Δt → 0
+            for note, delta in upcoming.items():
+                ratio = 1.0 - (delta / lookahead)        # 0 (far) … 1 (imminent)
+                # default = keyboard._default_colours.get(
+                #     note,
+                #     (255, 255, 255) if keyboard._is_white(note) else (0, 0, 0)
+                # )
+                default = (0,0,0)
+                red_pixel = (0, 0, 255)
+                blended = tuple(
+                    int((1 - ratio) * d + ratio * r) for d, r in zip(default, red_pixel)
+                )
+                keyboard.colours[note] = blended
 
-        # active notes override with full-bright green
-        for note in active:
-            keyboard.colours[note] = GREEN
+            # active notes override with full-bright green
+            for note in active:
+                keyboard.colours[note] = GREEN
 
-        # ── 4. render & handle UI ────────────────────────────────────────────
-        keyboard._render()
-        if keyboard.show(window_name):
-            break                               # Esc pressed
+            # ── 4. render & handle UI ────────────────────────────────────────────
+            keyboard._render()
+            if keyboard.show():
+                break                               # Esc pressed
 
-        if idx >= n_events and not active:
-            break                               # playback finished
-        
-        print("this iteration took", time.time() - t_last, "seconds")
-        used_time = time.time() - t_last
-        if used_time < 0.01:
-            time.sleep(0.01 - used_time)                       # ~100 fps cap
-
-    cv2.destroyAllWindows()
+            if idx >= n_events and not active:
+                break                               # playback finished
+            
+        #  print("this iteration took", time.time() - t_last, "seconds")
+            used_time = time.time() - t_last
+            if used_time < 0.01:
+                time.sleep(0.01 - used_time)                       # ~100 fps cap
+    finally:
+        cv2.destroyAllWindows()
 
 
 # ──────────────────────────────────────────────────────────────────────────────
