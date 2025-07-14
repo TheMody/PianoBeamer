@@ -26,3 +26,5 @@ First working Version:
 Will need to be tested.
 
 Keyboard bounding box is kinda slow (needs to iterate over 90degree turning), also the points could be further refined using simple jittering.
+
+Add some Demo Images.
