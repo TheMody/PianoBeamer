@@ -13,4 +13,16 @@ Current status:
 
 -Create a virtual keyboard, with each button individually colorable - Done - maybe too slow
 
--Read in Music
+-Read in Music -Done
+
+-Create Webserver -Done
+
+First working Version:
+
+-14.7.2025
+
+
+# Improvements
+Will need to be tested.
+
+Keyboard bounding box is kinda slow (needs to iterate over 90degree turning), also the points could be further refined using simple jittering.
