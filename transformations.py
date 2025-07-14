@@ -2,6 +2,34 @@ import numpy as np
 from model_training.identify_img import detect_keyboard
 import cv2
 from config import *
+def triangle_area(p1, p2, p3):
+    """
+    Return the area of a triangle given three 2-D points.
+
+    Parameters
+    ----------
+    p1, p2, p3 : tuple[float, float]
+        The vertices, e.g. (x, y).
+
+    Returns
+    -------
+    float
+        Triangle area (always non-negative).
+    """
+    (x1, y1), (x2, y2), (x3, y3) = p1, p2, p3
+    return abs(
+        (x1 * (y2 - y3) +
+         x2 * (y3 - y1) +
+         x3 * (y1 - y2)) * 0.5
+    )
+
+def calculate_area(pt1, pt2, pt3, pt4):
+    """
+    Calculate the area of a quadrilateral given its four corner points.
+    Uses the shoelace formula to calculate the area.
+    """
+    area = triangle_area(pt1, pt2, pt3) + triangle_area(pt1, pt3, pt4)
+    return area
 
 def detect_keyboard_and_postprocess(image, visualize = True, refine = True):
     # detects a keyboard from an overhead view as best as possible
@@ -47,15 +75,60 @@ def detect_keyboard_and_postprocess(image, visualize = True, refine = True):
             best_rot = i
             best_pt1, best_pt2, best_pt3, best_pt4 = pts_orig.astype(int)
 
-    # if refine:
-    #     rotation_matrix = cv2.getRotationMatrix2D((mask.shape[1] // 2, mask.shape[0] // 2), best_rot, 1)
-    #     rotated_mask = cv2.warpAffine(mask.astype(np.uint8) * 255, rotation_matrix, (mask.shape[1], mask.shape[0]))
-    #     pt1, pt2, pt3, pt4, area = find_keyboard_axis_aligned(rotated_mask // 255)
-
-    #     #try out slightly smaller area
 
 
+    if refine:
+        rotation_matrix = cv2.getRotationMatrix2D((mask.shape[1] // 2, mask.shape[0] // 2), best_rot, 1)
+        rotated_mask = cv2.warpAffine(mask.astype(np.uint8) * 255, rotation_matrix, (mask.shape[1], mask.shape[0]))
+        pt1, pt2, pt3, pt4, area = find_keyboard_axis_aligned(rotated_mask // 255)
+        rotation_matrix_inv = cv2.getRotationMatrix2D((mask.shape[1] // 2, mask.shape[0] // 2), -best_rot, 1)
+        #try out slightly smaller area
+        pts_available = [0,1,2,3,4,5,6,7]
+        pts = [pt1, pt2, pt3, pt4]
+        step = 2
+        mask_pixels = np.sum(rotated_mask == 255)
+        while len(pts_available) >= 1:
+            for pts_idx in pts_available:
+                try_out_pts = pts.copy()
+                if pts_idx // 4 == 0:
+                    first, second = 1, 0
+                else:
+                    first, second = 0, 1
+                if pts_idx % 4 == 0:
+                    try_out_pts[pts_idx % 4] = (try_out_pts[pts_idx % 4][0] + step * first, try_out_pts[pts_idx % 4][1] + step * second)
+                if pts_idx % 4 == 1:
+                    try_out_pts[pts_idx % 4] = (try_out_pts[pts_idx % 4][0] - step* first, try_out_pts[pts_idx % 4][1] + step* second)
+                if pts_idx % 4 == 2:
+                    try_out_pts[pts_idx % 4] = (try_out_pts[pts_idx % 4][0] - step* first, try_out_pts[pts_idx % 4][1] - step* second)
+                if pts_idx % 4 == 3:
+                    try_out_pts[pts_idx % 4] = (try_out_pts[pts_idx % 4][0] + step* first, try_out_pts[pts_idx % 4][1] - step* second)
+                
+               # area = calculate_area(*try_out_pts)
+                #also check if number of pixels in the mask is still the same
+                #first select all pixels in the mask that are in the area marked by the tryoutpts
+                mask_copy = np.zeros_like(rotated_mask, dtype=np.uint8)
+                cv2.fillConvexPoly(mask_copy, np.array(try_out_pts, dtype=np.int32), 2)
+
+                num_pixels = np.sum((mask_copy + rotated_mask) == 1)
+                if  num_pixels >= mask_pixels:
+                  #  min_area = area
+                    pts = try_out_pts
+                   # print(f"new best pts {pts_idx} num_pixels {num_pixels} mask_pixels {mask_pixels}")
+                 #   print(pts)
+                else:
+                   # print(f"Skipping pts {pts_idx}num_pixels {num_pixels} mask_pixels {mask_pixels}")
+                    pts_available.remove(pts_idx)
+
+        pts_rot = np.array(pts, dtype=np.float32).reshape(-1, 1, 2)
+        pts_orig = cv2.transform(pts_rot, rotation_matrix_inv)  # still (N,1,2)
+        pts_orig = pts_orig.reshape(-1, 2)        # drop the dummy dimension
+        best_pt1, best_pt2, best_pt3, best_pt4 = pts_orig.astype(int)
+        #  best_pt1, best_pt2, best_pt3, best_pt4 = pts
+        
     pt1, pt2, pt3, pt4 = best_pt1, best_pt2, best_pt3, best_pt4
+
+
+
 
 
         
