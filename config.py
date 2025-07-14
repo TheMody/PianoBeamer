@@ -7,8 +7,8 @@ c_height = 1080
 c_width = 1920
 
 #marker parameters
-marker_px = 120  # side length of each marker, in pixels
-border_px = 25  # white border around every marker
+marker_px = 240  # side length of each marker, in pixels
+border_px = 50  # white border around every marker
 
 #keyboard parameters
 NUM_KEYS = 87  # number of keys on the keyboard

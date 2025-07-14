@@ -11,7 +11,7 @@ from keyboard_vis_cv import animate, extract_events
 from utils import capture_img
 
 
-def setup_and_calibrate(test = True):
+def setup_and_calibrate(test = False):
     if test:
         image = cv2.imread('images/challenging_example.png')
         print("loaded images")
@@ -30,6 +30,9 @@ def setup_and_calibrate(test = True):
         image = cv2.resize(image, (int(width * scale_factor), int(height * scale_factor)))
         # Detect keyboard
         keyboard_contour = detect_keyboard_and_postprocess(image)
+        if keyboard_contour is None:
+            print("Error: Could not detect keyboard in the image.")
+            return None
         print("detected keyboard contour")
 
         if test:
@@ -41,14 +44,22 @@ def setup_and_calibrate(test = True):
             combined_image[offset[0]:offset[0]+marker_img.shape[0], offset[1]:offset[1]+marker_img.shape[1]] = combined_image[offset[0]:offset[0]+marker_img.shape[0], offset[1]:offset[1]+marker_img.shape[1]]*0.5 + marker_img*0.5
             combined_image = np.clip(combined_image, 0, 255)  # Ensure pixel values are within valid range
         else:
-            cv2.namedWindow(PianoKeyboardCV.WINNAME, cv2.WINDOW_NORMAL)          # create once, before first imshow
-            cv2.setWindowProperty(PianoKeyboardCV.WINNAME,
+            marker_img = cv2.resize(marker_img,( b_width, b_height))
+            cv2.namedWindow("Marker_img", cv2.WINDOW_NORMAL)          # create once, before first imshow
+            cv2.setWindowProperty("Marker_img",
                         cv2.WND_PROP_FULLSCREEN,
-                        cv2.WINDOW_FULLSCREEN)  
-            cv2.imshow(marker_img)
-            time.sleep(2.0)
+                        cv2.WINDOW_FULLSCREEN)
+            cv2.imshow("Marker_img",marker_img)
+            cv2.waitKey(1000)
             combined_image = capture_img()
+            cv2.waitKey(500)
+            cv2.destroyAllWindows()
 
+
+        #show combined image
+        cv2.imshow("Combined Image", combined_image)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
         #detect the four markers in the image
         corners = detect_four_markers(combined_image)#,background_img=image*0.9)
         print("detected beamer view")
