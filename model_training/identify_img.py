@@ -14,15 +14,15 @@ $ python inference.py \
     --num_classes 21 \
     --model_name "facebook/mask2former-swin-base-IN21k-ade-semantic"
 """
-
-import argparse
 import json
 import torch
 import numpy as np
 from PIL import Image
 from transformers import Mask2FormerImageProcessor
-from model import custom_model
+from model_training.model import custom_model
 from vis_tools import visualize_prediction
+from transformers.utils import logging as hf_logging
+hf_logging.set_verbosity_error()
 
 MAXSIZE = 384
 
@@ -31,7 +31,7 @@ def detect_keyboard(image):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # 1. Load the checkpoint
-    checkpoint = torch.load("checkpoints/best_model.pth", map_location=device)
+    checkpoint = torch.load("model_training/checkpoints/best_model.pth", map_location=device)
 
     # 2. Recreate the processor from the saved configuration
     processor_config = json.loads(checkpoint["processor"])

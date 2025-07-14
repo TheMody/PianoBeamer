@@ -32,22 +32,18 @@ $ python train_mask2former.py --data_root ./dataset --num_classes 21
 """
 
 import argparse
-import glob
 import os
 from pathlib import Path
 from typing import Dict, List, Tuple
 
-import torchvision
 from tqdm import tqdm
 import albumentations as A
 import numpy as np
 import torch
 from PIL import Image
 from torch.utils.data import Dataset, DataLoader
-from transformers import (Mask2FormerForUniversalSegmentation,
-                          Mask2FormerImageProcessor, Trainer,
-                          TrainingArguments, default_data_collator)
-from model import custom_model
+from transformers import (Mask2FormerImageProcessor,default_data_collator)
+from model_training.model import custom_model
 from vis_tools import visualize_prediction
 
 
@@ -126,19 +122,14 @@ class SegmentationDataset(Dataset):
             segmentation_maps=augmented["mask"],
             return_tensors="pt",
         )
-        #print(enc)
         # Remove batch dim added by processor
         enc = {k: v[0] for k, v in enc.items()}
-        # The processor returns 'class_labels' (instance‑level). For semantic
-        # segmentation we only need pixel_label_ids.
-        #enc["labels"] = enc.pop("mask_labels")
         enc["image"] = augmented["image"]
         return enc
 
 
 def parse_args():
     ap = argparse.ArgumentParser()
-   # ap.add_argument("--data_root", type=Path, default = "data/", help="Dataset root dir")
     ap.add_argument("--model_name", type=str, default="facebook/mask2former-swin-base-IN21k-ade-semantic")
     ap.add_argument("--output_dir", type=Path, default="./checkpoints")
     ap.add_argument("--batch_size", type=int, default=4)
