@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Piano Beamer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Bootstrap 5 (CDN) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    body { background:#f8f9fa; }
+    .scroll-box { max-height:300px; overflow-y:auto; }
+    .file-radio { cursor:pointer; }
+    /* log styling */
+    #logBox { background:#212529; color:#f8f9fa; }
+  </style>
+</head>
+<body>
+  <!-- Top bar -->
+  <nav class="navbar navbar-dark bg-dark">
+    <div class="container-fluid">
+      <span class="navbar-brand mb-0 h1">Piano Beamer</span>
+    </div>
+  </nav>
+
+  <div class="container py-4">
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, msg in messages %}
+          <div class="alert alert-{{ 'success' if category=='success' else 'danger' }} alert-dismissible fade show" role="alert">
+            {{ msg|safe }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="row g-4">
+      <!-- Controls card -->
+      <div class="col-12 col-md-4">
+        <div class="card shadow-sm">
+          <div class="card-body d-grid gap-2">
+            <h5 class="card-title">System Controls</h5>
+            <form action="{{ url_for('trigger', name='event_one') }}" method="post">
+              <button class="btn btn-primary w-100" type="submit">Setup &amp; Calibrate</button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Song list card -->
+      <div class="col-12 col-md-8">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title mb-3">Available Songs</h5>
+
+            {% if files %}
+            <form action="{{ url_for('process_selected') }}" method="post">
+              <!-- Playback speed slider -->
+              <div class="mb-3">
+                <label for="speedRange" class="form-label">Playback Speed: <span id="speedValue">{{ "%.1f"|format(speed) }}×</span></label>
+                <input class="form-range" type="range" min="0.1" max="2" step="0.1" value="{{ speed }}" id="speedRange" name="speed">
+              </div>
+
+              <!-- File list -->
+              <div class="scroll-box list-group mb-3">
+                {% for f in files %}
+                  <label class="list-group-item d-flex align-items-center gap-2 file-radio">
+                    <input class="form-check-input flex-shrink-0" type="radio" name="selected_file" value="{{ f }}" required />
+                    <span>{{ f }}</span>
+                  </label>
+                {% endfor %}
+              </div>
+
+              <div class="d-grid">
+                <button class="btn btn-success" type="submit">Play Selected Song</button>
+              </div>
+            </form>
+            {% else %}
+              <p class="text-muted">Folder is empty.</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Server log -------------------------------------------------- -->
+    <div class="row g-4 mt-3">
+      <div class="col-12">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title mb-3">Server Console</h5>
+            <pre id="logBox" class="scroll-box border p-2 small"></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Speed label sync
+    const range = document.getElementById('speedRange');
+    const out   = document.getElementById('speedValue');
+    if (range && out) {
+      out.textContent = parseFloat(range.value).toFixed(1) + '×';
+      range.addEventListener('input', e => {
+        out.textContent = parseFloat(e.target.value).toFixed(1) + '×';
+      });
+    }
+
+    // ---- simple polling log viewer -------------------------------
+    function fetchLogs() {
+      fetch("{{ url_for('get_logs') }}")
+        .then(resp => resp.text())
+        .then(text => {
+          const box = document.getElementById('logBox');
+          if (box) {
+            box.textContent = text;
+            box.scrollTop = box.scrollHeight;  // auto-scroll to bottom
+          }
+        })
+        .catch(err => console.error("log fetch error", err));
+    }
+    // Initial fetch + periodic refresh every 2 s
+    window.addEventListener('load', fetchLogs);
+    setInterval(fetchLogs, 2000);
+  </script>
+</body>
+</html>
