@@ -116,5 +116,4 @@ def trigger(name):
 # ENTRY POINT ----------------------------------------------------------
 # ----------------------------------------------------------------------
 if __name__ == "__main__":
-    # Use debug=True only during development
     app.run(debug=False, host="0.0.0.0", port=5000, threaded = False)

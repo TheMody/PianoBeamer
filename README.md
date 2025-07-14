@@ -1,6 +1,8 @@
 # PianoBeamer
 
-The goal is to detect the keyboard of a piano and use a beamer to project the instructions onto the keyboard.
+Turn your old fashioned piano into a fancy new one. All you need is a USB Camera and a Beamer. Both should be placed above the piano looking down and have a good view on the keyboard. 
+
+The code base then uses fancy AI tools to detect the keyboard. Then the Beamer projects 
 
 Current status:
 

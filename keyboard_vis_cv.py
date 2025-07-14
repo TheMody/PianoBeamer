@@ -52,6 +52,7 @@ class PianoKeyboardCV:
             for n in self.notes
         }
         self.colours = dict(self._default_colours)
+        self.activated: Dict[int, float] = {n: 0.0 for n in self.notes}  # note → opacity (0.0 … 1.0)
         self._build_white_x()
         self._render()
 
@@ -108,22 +109,27 @@ class PianoKeyboardCV:
         for n in self.notes:
             if self._is_white(n) and self.colours[n] != self._default_colours[n]:
                 x = self._white_x[n]
-                cv2.rectangle(canvas, (x, 0), (x + WHITE_W, WHITE_H),
+                cv2.rectangle(canvas, (x, 0), (x + WHITE_W, int(WHITE_H*self.activated[n])),
                               self.colours[n], thickness=-1)
                 # cv2.rectangle(canvas, (x, 0), (x + self.WHITE_W, self.WHITE_H),
                 #               (0, 0, 0), thickness=self.OUTLINE_THICKNESS)
 
         # pass 2 – black keys
         for n in self.notes:
-            if not self._is_white(n) and self.colours[n]: #!= self._default_colours[n]:
+            if not self._is_white(n):
                 prev_white = n - 1
                 while prev_white not in self._white_x:
                     prev_white -= 1
                 x_left = (self._white_x[prev_white]
                           + WHITE_W - BLACK_W // 2)
-                cv2.rectangle(canvas, (x_left, 0),
-                              (x_left + BLACK_W, BLACK_H),
-                              self.colours[n], thickness=-1)
+                if self.colours[n] != self._default_colours[n]:
+                    cv2.rectangle(canvas, (x_left, 0),
+                                (x_left + BLACK_W, int(BLACK_H*self.activated[n])),
+                                self.colours[n], thickness=-1)
+                else:
+                    cv2.rectangle(canvas, (x_left, 0),
+                                (x_left + BLACK_W, BLACK_H),
+                                self.colours[n], thickness=-1)
                 # cv2.rectangle(canvas, (x_left, 0),
                 #               (x_left + self.BLACK_W, self.BLACK_H),
                 #               (0, 0, 0), thickness=self.OUTLINE_THICKNESS)
@@ -275,6 +281,7 @@ def animate(events, keyboard, lookahead=0.5,playback_speed = 0.5, window_name='P
                     int((1 - ratio) * d + ratio * r) for d, r in zip(default, red_pixel)
                 )
                 keyboard.colours[note] = blended
+                keyboard.activated[note] = ratio
 
             # active notes override with full-bright green
             for note in active:

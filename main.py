@@ -1,22 +1,29 @@
 import cv2
 import numpy as np
 
-import math
+import time
 from marker import detect_four_markers
 from keyboard_vis_cv import PianoKeyboardCV
 from config import *
 from transformations import detect_keyboard_and_postprocess, project_points
 import mido
 from keyboard_vis_cv import animate, extract_events
+from utils import capture_img
 
 
-def setup_and_calibrate():
-    image = cv2.imread('images/challenging_example.png')
+def setup_and_calibrate(test = True):
+    if test:
+        image = cv2.imread('images/challenging_example.png')
+        print("loaded images")
+    else:
+        image = capture_img()
+        print("captured image")
+
     marker_img = cv2.imread('images/four_markers.png')
-    print("loaded images")
+
     # rescale image to a reasonable size
     if image is None:
-        print("Error: Could not load image.")
+        print("Error: Could not load/capture image.")
     else:
         height, width = image.shape[:2]
         scale_factor = 1200 / max(height, width)
@@ -25,13 +32,22 @@ def setup_and_calibrate():
         keyboard_contour = detect_keyboard_and_postprocess(image)
         print("detected keyboard contour")
 
-        # Create a dummy input we can use as a test
-        marker_img = cv2.resize(marker_img, (int(image.shape[1]*0.9), int(image.shape[0]*0.9)))
-        combined_image = image.copy()
-        combined_image = combined_image.astype(np.float32)  # Convert to float32 for blending
-        offset = (50,50)
-        combined_image[offset[0]:offset[0]+marker_img.shape[0], offset[1]:offset[1]+marker_img.shape[1]] = combined_image[offset[0]:offset[0]+marker_img.shape[0], offset[1]:offset[1]+marker_img.shape[1]]*0.5 + marker_img*0.5
-        combined_image = np.clip(combined_image, 0, 255)  # Ensure pixel values are within valid range
+        if test:
+            # Create a dummy input we can use as a test
+            marker_img = cv2.resize(marker_img, (int(image.shape[1]*0.9), int(image.shape[0]*0.9)))
+            combined_image = image.copy()
+            combined_image = combined_image.astype(np.float32)  # Convert to float32 for blending
+            offset = (50,50)
+            combined_image[offset[0]:offset[0]+marker_img.shape[0], offset[1]:offset[1]+marker_img.shape[1]] = combined_image[offset[0]:offset[0]+marker_img.shape[0], offset[1]:offset[1]+marker_img.shape[1]]*0.5 + marker_img*0.5
+            combined_image = np.clip(combined_image, 0, 255)  # Ensure pixel values are within valid range
+        else:
+            cv2.namedWindow(PianoKeyboardCV.WINNAME, cv2.WINDOW_NORMAL)          # create once, before first imshow
+            cv2.setWindowProperty(PianoKeyboardCV.WINNAME,
+                        cv2.WND_PROP_FULLSCREEN,
+                        cv2.WINDOW_FULLSCREEN)  
+            cv2.imshow(marker_img)
+            time.sleep(2.0)
+            combined_image = capture_img()
 
         #detect the four markers in the image
         corners = detect_four_markers(combined_image)#,background_img=image*0.9)
