@@ -1,8 +1,8 @@
 
 import cv2
-from config import *
+#from config import WEBCAM_ID
 
-def capture_img(cam_index: int = WEBCAM_ID, backend = cv2.CAP_ANY):
+def capture_img(cam_index: int = 4, backend = cv2.CAP_ANY):
     # 1. Open the device in the constructor
     cap = cv2.VideoCapture(cam_index, backend)
 

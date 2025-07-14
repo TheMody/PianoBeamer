@@ -11,12 +11,12 @@ from keyboard_vis_cv import animate, extract_events
 from utils import capture_img
 
 
-def setup_and_calibrate(test = False):
+def setup_and_calibrate(test = True):
     if test:
         image = cv2.imread('images/challenging_example.png')
         print("loaded images")
     else:
-        image = capture_img()
+        image = capture_img(WEBCAM_ID)
         print("captured image")
 
     marker_img = cv2.imread('images/four_markers.png')
@@ -51,7 +51,7 @@ def setup_and_calibrate(test = False):
                         cv2.WINDOW_FULLSCREEN)
             cv2.imshow("Marker_img",marker_img)
             cv2.waitKey(1000)
-            combined_image = capture_img()
+            combined_image = capture_img(WEBCAM_ID)
             cv2.waitKey(500)
             cv2.destroyAllWindows()
 
