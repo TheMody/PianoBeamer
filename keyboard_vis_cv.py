@@ -237,7 +237,7 @@ RED   = (0,   0, 255)
 
 
 
-def animate(events, keyboard, lookahead=0.5,playback_speed = 0.5, window_name='Piano'):
+def animate(events, keyboard, lookahead=0.5,playback_speed = 1, window_name='Piano'):
     """
     Realtime visualiser
         • GREEN – notes currently sounding
@@ -317,27 +317,13 @@ def animate(events, keyboard, lookahead=0.5,playback_speed = 0.5, window_name='P
 #  CLI
 # ──────────────────────────────────────────────────────────────────────────────
 def main():
-    ap = argparse.ArgumentParser(
-        description="Animate a MIDI file on a scrolling piano keyboard."
-    )
-    ap.add_argument("midi_file", type=Path,
-                    help="path to a .mid file")
-    ap.add_argument("--start", type=int, default=21,
-                    help="lowest MIDI note to draw (default: 21 = A0)")
-    ap.add_argument("--keys", type=int, default=88,
-                    help="number of keys to draw (default: 88)")
-    ap.add_argument("--window", type=float, default=2.0,
-                    help="look-ahead window in seconds for upcoming notes")
-    args = ap.parse_args()
 
-    if not args.midi_file.exists():
-        ap.error(f"File not found: {args.midi_file}")
 
-    midi = mido.MidiFile(args.midi_file)
+    midi = mido.MidiFile("midi_files/Pirate.mid")
     events = extract_events(midi)
 
-    kb = PianoKeyboardCV(start_midi=args.start, num_keys=args.keys)
-    animate(events, kb, lookahead=args.window)
+    kb = PianoKeyboardCV(start_midi=21, num_keys=NUM_KEYS)
+    animate(events, kb, lookahead=LOOKAHEAD)
 
 
 if __name__ == "__main__":

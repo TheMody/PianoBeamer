@@ -56,7 +56,7 @@ def create_four_marker_image(
 # 2)  Detect *those* four markers and return their (sub-pixel) centres
 # ─────────────────────────────────────────────────────────────────────────────
 def detect_four_markers(
-        image: np.ndarray,
+        image,
         background_img: np.ndarray | None = None,
         dict_name: int = aruco.DICT_4X4_50,
         expected_ids: set[int] | None = None,
