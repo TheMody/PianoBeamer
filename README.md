@@ -32,7 +32,7 @@ Then go to 127.0.0.1:5000 or wherever Flask tells you your site is hosted.
 
 -Transformer between keyboard space and image space - Done
 
--Create a virtual keyboard, with each button individually colorable - Done - maybe too slow
+-Create a virtual keyboard, with each button individually colorable - Done 
 
 -Read in Music -Done
 
