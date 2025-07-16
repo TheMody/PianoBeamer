@@ -10,6 +10,7 @@ import builtins, functools
 import numpy as np
 import cv2
 import io
+from download_midi import download_first_midi
 # ----------------------------------
 # CONFIG ---------------------------------------------------------------
 # ----------------------------------------------------------------------
@@ -111,6 +112,22 @@ def trigger(name):
             flash("Event 2 executed.", "success")
         case _:
             flash(f"Unknown event {name!r}", "error")
+    return redirect(url_for("index"))
+
+# ────────────────────────────────────────────────
+# Route that receives the form submission
+# ────────────────────────────────────────────────
+@app.route("/download_url", methods=["POST"])
+def download_url():
+    url = request.form.get("url")
+    if not url:
+        flash("No URL provided.", "error")
+        return redirect(url_for("index"))
+    try:
+        download_first_midi(url)               
+        flash(f"URL processed: {url}", "success")
+    except Exception as e:
+        flash(f"Error processing URL: {e}", "error")
     return redirect(url_for("index"))
 
 @app.route("/snapshot")

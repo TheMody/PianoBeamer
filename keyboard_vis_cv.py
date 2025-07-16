@@ -91,7 +91,7 @@ class PianoKeyboardCV:
     def update_transform(self,H):
         self.H  = H
 
-    def _render(self, add_frame = True):
+    def _render(self, add_frame = test):
         canvas = np.full((self.height, self.width, 3),
                          0, dtype=np.uint8)
         

@@ -11,7 +11,7 @@ from keyboard_vis_cv import animate, extract_events
 from utils import capture_img, visualize_keyboard_and_beamer
 
 
-def setup_and_calibrate(test = True):
+def setup_and_calibrate(test = test):
     if test:
         image = cv2.imread('images/challenging_example.png')
         print("loaded images")

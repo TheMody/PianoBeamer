@@ -21,3 +21,4 @@ LOOKAHEAD = 2.0  # seconds to look ahead in the animation
 #other parameters
 LEADTIME_SONG = 2.0
 WEBCAM_ID = 4
+test = True
