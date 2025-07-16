@@ -46,6 +46,5 @@ First working Version:
 # Improvements
 Will need to be tested.
 
-Keyboard bounding box is kinda slow (needs to iterate over 90degree turning), also the points could be further refined using simple jittering.
+Keyboard bounding box is kinda slow (needs to iterate over 90degree turning)
 
-Add some Demo Images.
