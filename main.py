@@ -5,10 +5,10 @@ import time
 from marker import detect_four_markers
 from keyboard_vis_cv import PianoKeyboardCV
 from config import *
-from transformations import detect_keyboard_and_postprocess, project_points
+from transformations import detect_keyboard_and_postprocess, project_points, detect_beamer_area
 import mido
 from keyboard_vis_cv import animate, extract_events
-from utils import capture_img
+from utils import capture_img, visualize_keyboard_and_beamer
 
 
 def setup_and_calibrate(test = True):
@@ -16,10 +16,17 @@ def setup_and_calibrate(test = True):
         image = cv2.imread('images/challenging_example.png')
         print("loaded images")
     else:
+        black_img = np.zeros((b_height, b_width, 3), dtype=np.uint8)
+        cv2.namedWindow("black_img", cv2.WINDOW_NORMAL)          # create once, before first imshow
+        cv2.setWindowProperty("black_img",
+                    cv2.WND_PROP_FULLSCREEN,
+                    cv2.WINDOW_FULLSCREEN)
+        cv2.imshow("black_img",black_img)
+        cv2.waitKey(250)
         image = capture_img(WEBCAM_ID)
+        cv2.waitKey(100) 
+        cv2.destroyAllWindows()
         print("captured image")
-
-    marker_img = cv2.imread('images/four_markers.png')
 
     # rescale image to a reasonable size
     if image is None:
@@ -37,32 +44,39 @@ def setup_and_calibrate(test = True):
 
         if test:
             # Create a dummy input we can use as a test
-            marker_img = cv2.resize(marker_img, (int(image.shape[1]*0.9), int(image.shape[0]*0.9)))
+            if marker_Mode == "marker":
+                marker_img = cv2.imread('images/four_markers.png')
+                marker_img = cv2.resize(marker_img, (int(image.shape[1]*0.9), int(image.shape[0]*0.9)))
+            else:
+                marker_img = np.ones((int(image.shape[0]*0.5), int(image.shape[1]*0.5), 3), dtype=np.uint8) * 255  # Create a white image for testing
             combined_image = image.copy()
             combined_image = combined_image.astype(np.float32)  # Convert to float32 for blending
-            offset = (50,50)
+            offset = (250,250)
             combined_image[offset[0]:offset[0]+marker_img.shape[0], offset[1]:offset[1]+marker_img.shape[1]] = combined_image[offset[0]:offset[0]+marker_img.shape[0], offset[1]:offset[1]+marker_img.shape[1]]*0.5 + marker_img*0.5
             combined_image = np.clip(combined_image, 0, 255)  # Ensure pixel values are within valid range
+            combined_image = combined_image.astype(np.uint8)
         else:
-            marker_img = cv2.resize(marker_img,( b_width, b_height))
-            cv2.namedWindow("Marker_img", cv2.WINDOW_NORMAL)          # create once, before first imshow
+            if marker_Mode == "marker":
+                marker_img = cv2.resize(marker_img,( b_width, b_height))
+            else:
+                marker_img = np.ones((int(image.shape[0]*0.9), int(image.shape[1]*0.9), 3), dtype=np.uint8) * 255 
+            cv2.namedWindow("Marker_img", cv2.WINDOW_NORMAL)          
             cv2.setWindowProperty("Marker_img",
                         cv2.WND_PROP_FULLSCREEN,
                         cv2.WINDOW_FULLSCREEN)
             cv2.imshow("Marker_img",marker_img)
-            cv2.waitKey(1000)
+            cv2.waitKey(250)
             combined_image = capture_img(WEBCAM_ID)
-            cv2.waitKey(500)
+            cv2.waitKey(100)
             cv2.destroyAllWindows()
 
-
-        #show combined image
-        cv2.imshow("Combined Image", combined_image)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
-        #detect the four markers in the image
-        corners = detect_four_markers(combined_image)#,background_img=image*0.9)
+        #detect the beamer projection area
+        if marker_Mode == "marker":
+            corners = detect_four_markers(combined_image)#,background_img=image*0.9)
+        else:
+            corners = detect_beamer_area(combined_image, image)
         print("detected beamer view")
+        visualize_keyboard_and_beamer(image, keyboard_contour, corners)
         #these are the corner coordinates for the beamer to display the keyboard
         newpt1, newpt2, newpt3, newpt4 = project_points(keyboard_contour, corners)
         
@@ -87,7 +101,7 @@ if __name__ == "__main__":
     kb = setup_and_calibrate()
  
     play_song("midi_files/Fur Elise.mid", kb)
-    play_song("midi_files/davy.mid", kb)
+  #  play_song("midi_files/davy.mid", kb)
       
 
     

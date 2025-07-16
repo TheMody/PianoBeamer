@@ -165,7 +165,6 @@ def detect_four_markers(
 
 
 
-
 if __name__ == "__main__":
     # Create an image with four markers
     img = create_four_marker_image()

@@ -31,13 +31,8 @@ def calculate_area(pt1, pt2, pt3, pt4):
     area = triangle_area(pt1, pt2, pt3) + triangle_area(pt1, pt3, pt4)
     return area
 
-def detect_keyboard_and_postprocess(image, visualize = True, refine = True):
-    # detects a keyboard from an overhead view as best as possible
-    mask = detect_keyboard(image) # this is an image filled with 1s and 0s, where 1s are the pixels that are part of the keyboard
+def extract_cornerpoints_from_mask(mask, refine = True):
 
-    if np.sum(mask) == 0:
-        print("No keyboard detected in the image.")
-        return None
     #find the four edge points of the keyboard
     #first get all indices of the mask where the value is 1 and try out different rotations
     def find_keyboard_axis_aligned(mask):
@@ -129,14 +124,58 @@ def detect_keyboard_and_postprocess(image, visualize = True, refine = True):
         #  best_pt1, best_pt2, best_pt3, best_pt4 = pts
         
     pt1, pt2, pt3, pt4 = best_pt1, best_pt2, best_pt3, best_pt4
+
+    return pt1, pt2, pt3, pt4
+
+def detect_beamer_area(image, background_img, threshold = marker_threshold):
+    '''the image should be a camera picture where the beamer projected just a white screen, while on the background_img the beamer projected a black screen. The difference should be easy to calculate.
+
+    image: the image captured by the camera
+    background_img: the image captured by the camera when the beamer projected a black screen
+    '''
+
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    bg_gray = cv2.cvtColor(background_img, cv2.COLOR_BGR2GRAY)
+    gray = gray.astype(float)
+    bg_gray = bg_gray.astype(float)
+    gray = np.clip(gray - bg_gray, 0, 255)
+    #blur the image
+    gray = cv2.GaussianBlur(gray, (5, 5), 0)
+    #threshold the image to create a mask
+    mask = gray > threshold  # Adjust threshold as needed
+
+    pt1, pt2, pt3, pt4 = extract_cornerpoints_from_mask(mask, refine=True)   
+
+    # display_img = mask.astype(np.uint8) * 255
+    # display_img = cv2.cvtColor(display_img, cv2.COLOR_GRAY2BGR)
+
+    # cv2.line(display_img, pt1, pt2, (0,0,255), 3, cv2.LINE_AA)
+    # cv2.line(display_img, pt2, pt3, (0,0,255), 3, cv2.LINE_AA)
+    # cv2.line(display_img, pt3, pt4, (0,0,255), 3, cv2.LINE_AA)
+    # cv2.line(display_img, pt4, pt1, (0,0,255), 3, cv2.LINE_AA)
+
+    # cv2.imshow("Beamer Area Detection", display_img)
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
+
+    return (pt1, pt2, pt3, pt4)
+
+def detect_keyboard_and_postprocess(image, refine = True):
+    # detects a keyboard from an overhead view as best as possible
+    mask = detect_keyboard(image) # this is an image filled with 1s and 0s, where 1s are the pixels that are part of the keyboard
+
+    if np.sum(mask) == 0:
+        print("No keyboard detected in the image.")
+        return None
     
-    if visualize:
-        image = image.astype(np.float32)  # Convert image to float32 for overlaying mask
-        image[:,:,1] = image[:,:,1] + mask * 255  # Overlay the mask on the red channel
-        image = np.clip(image, 0, 255)  # Ensure pixel values are within valid range
-        image = image.astype(np.uint8)  # Convert back to uint8 for display
-
-
+    # Extract corner points from the mask
+    pt1, pt2, pt3, pt4 = extract_cornerpoints_from_mask(mask, refine=refine)
+    
+    # if visualize:
+    #     image = image.astype(np.float32)  # Convert image to float32 for overlaying mask
+    #     image[:,:,1] = image[:,:,1] + mask * 255  # Overlay the mask on the red channel
+    #     image = np.clip(image, 0, 255)  # Ensure pixel values are within valid range
+    #     image = image.astype(np.uint8)  # Convert back to uint8 for display
 
     return (pt1, pt2, pt3, pt4)
 

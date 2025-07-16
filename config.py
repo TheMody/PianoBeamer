@@ -9,6 +9,8 @@ c_width = 1920
 #marker parameters
 marker_px = 240  # side length of each marker, in pixels
 border_px = 50  # white border around every marker
+marker_Mode = "white" # "marker"
+marker_threshold = 50
 
 #keyboard parameters
 NUM_KEYS = 87  # number of keys on the keyboard
