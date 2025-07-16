@@ -27,6 +27,11 @@ def setup_and_calibrate(test = test):
         cv2.waitKey(100) 
         cv2.destroyAllWindows()
         print("captured image")
+        cv2.imshow("captured image", image)
+        cv2.waitKey()  # wait for a second to see the image 
+        cv2.destroyAllWindows()
+
+  
 
     # rescale image to a reasonable size
     if image is None:

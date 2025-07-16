@@ -128,7 +128,7 @@ class PianoKeyboardCV:
                 if self.colours[n] != self._default_colours[n]:
                     cv2.rectangle(canvas, (x_left, 0),
                                 (x_left + BLACK_W, int(BLACK_H*self.activated[n])),
-                                self.colours[n], thickness=-1)
+                                (0,255,255), thickness=-1)
                 else:
                     cv2.rectangle(canvas, (x_left, 0),
                                 (x_left + BLACK_W, BLACK_H),

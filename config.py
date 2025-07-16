@@ -21,5 +21,5 @@ flip_keyboard = True # flip the keyboard horizontally
 
 #other parameters
 LEADTIME_SONG = 2.0
-WEBCAM_ID = 4
+WEBCAM_ID = 0
 test = False
