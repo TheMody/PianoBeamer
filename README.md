@@ -4,7 +4,24 @@ Turn your old fashioned piano into a fancy new one. All you need is a USB Camera
 
 The code base then uses fancy AI tools to detect the keyboard. Then the Beamer projects 
 
-Current status:
+# Install
+
+Use pip to install all needed python packages.
+
+```
+pip install ...
+```
+# Usage
+
+Run:
+
+```
+python app.py
+```
+
+Then go to 127.0.0.1:5000 or wherever Flask tells you your site is hosted.
+
+# Current status:
 
 -Detect Keyboard - Done
 ![Keyboard Detection](images/keyboard_beamer_contours.png)
