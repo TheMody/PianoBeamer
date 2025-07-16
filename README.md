@@ -7,7 +7,7 @@ The code base then uses fancy AI tools to detect the keyboard. Then the Beamer p
 Current status:
 
 -Detect Keyboard - Done
-![Keyboard Detection](images/first_result.png)
+![Keyboard Detection](images/keyboard_beamer_contours.png)
 
 -Project Marker Image and detect Markers - Done
 
