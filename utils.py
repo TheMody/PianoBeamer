@@ -2,12 +2,41 @@
 import cv2
 #from config import WEBCAM_ID
 
+def list_available_cams(max_index: int = 10, backend=cv2.CAP_ANY) -> list[int]:
+    """
+    Return a list of camera indexes that can be opened with OpenCV.
+
+    Parameters
+    ----------
+    max_index : int
+        Highest index (exclusive) to probe, e.g. 10 means 0‥9.
+    backend : int
+        OpenCV backend flag (default: cv2.CAP_ANY).
+
+    Notes
+    -----
+    • Adjust `max_index` if you expect more than 10 devices.  
+    • On Windows you might prefer `backend=cv2.CAP_DSHOW` or `cv2.CAP_MSMF`
+      to speed up probing.
+    """
+    found = []
+    for idx in range(max_index):
+        cap = cv2.VideoCapture(idx, backend)
+        if cap.isOpened():
+            found.append(idx)
+        cap.release()
+    return found
+
 def capture_img(cam_index: int = 4, backend = cv2.CAP_ANY):
     # 1. Open the device in the constructor
     cap = cv2.VideoCapture(cam_index, backend)
 
     if not cap.isOpened():          # <- returns immediately if the open failed
-        raise IOError(f"Cannot open camera (index {cam_index})")
+        print(f"Cannot open camera (index {cam_index})")
+        available_list = list_available_cams()  # <- probe available cameras
+        print("Available camera indexes:")
+        print(available_list)
+        return None
 
     try:
         # 2. Grab one frame
