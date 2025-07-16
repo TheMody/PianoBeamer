@@ -126,13 +126,7 @@ def detect_keyboard_and_postprocess(image, visualize = True, refine = True):
         #  best_pt1, best_pt2, best_pt3, best_pt4 = pts
         
     pt1, pt2, pt3, pt4 = best_pt1, best_pt2, best_pt3, best_pt4
-
-
-
-
-
-        
-
+    
     if visualize:
         image = image.astype(np.float32)  # Convert image to float32 for overlaying mask
         image[:,:,1] = image[:,:,1] + mask * 255  # Overlay the mask on the red channel
