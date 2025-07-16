@@ -56,7 +56,7 @@ def extract_cornerpoints_from_mask(mask, refine = True):
     min_area = 1e9
     best_rot = 0
     #try different rotations
-    for i in range(-45,45,1):
+    for i in range(-22,22,1):
         #define rotation matrix 2D
         angle = i 
         rotation_matrix = cv2.getRotationMatrix2D((mask.shape[1] // 2, mask.shape[0] // 2), angle, 1)
@@ -139,6 +139,10 @@ def detect_beamer_area(image, background_img, threshold = marker_threshold):
     gray = gray.astype(float)
     bg_gray = bg_gray.astype(float)
     gray = np.clip(gray - bg_gray, 0, 255)
+
+    cv2.imshow("Beamer Area Detection", gray.astype(np.uint8))
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
     #blur the image
     gray = cv2.GaussianBlur(gray, (5, 5), 0)
     #threshold the image to create a mask
@@ -146,17 +150,17 @@ def detect_beamer_area(image, background_img, threshold = marker_threshold):
 
     pt1, pt2, pt3, pt4 = extract_cornerpoints_from_mask(mask, refine=True)   
 
-    # display_img = mask.astype(np.uint8) * 255
-    # display_img = cv2.cvtColor(display_img, cv2.COLOR_GRAY2BGR)
+    display_img = mask.astype(np.uint8) * 255
+    display_img = cv2.cvtColor(display_img, cv2.COLOR_GRAY2BGR)
 
-    # cv2.line(display_img, pt1, pt2, (0,0,255), 3, cv2.LINE_AA)
-    # cv2.line(display_img, pt2, pt3, (0,0,255), 3, cv2.LINE_AA)
-    # cv2.line(display_img, pt3, pt4, (0,0,255), 3, cv2.LINE_AA)
-    # cv2.line(display_img, pt4, pt1, (0,0,255), 3, cv2.LINE_AA)
+    cv2.line(display_img, pt1, pt2, (0,0,255), 3, cv2.LINE_AA)
+    cv2.line(display_img, pt2, pt3, (0,0,255), 3, cv2.LINE_AA)
+    cv2.line(display_img, pt3, pt4, (0,0,255), 3, cv2.LINE_AA)
+    cv2.line(display_img, pt4, pt1, (0,0,255), 3, cv2.LINE_AA)
 
-    # cv2.imshow("Beamer Area Detection", display_img)
-    # cv2.waitKey(0)
-    # cv2.destroyAllWindows()
+    cv2.imshow("Beamer Area Detection", display_img)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
     return (pt1, pt2, pt3, pt4)
 

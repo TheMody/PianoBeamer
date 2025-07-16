@@ -33,8 +33,8 @@ def setup_and_calibrate(test = test):
         print("Error: Could not load/capture image.")
     else:
         height, width = image.shape[:2]
-        scale_factor = 1200 / max(height, width)
-        image = cv2.resize(image, (int(width * scale_factor), int(height * scale_factor)))
+        # scale_factor = 1200 / max(height, width)
+        # image = cv2.resize(image, (int(width * scale_factor), int(height * scale_factor)))
         # Detect keyboard
         keyboard_contour = detect_keyboard_and_postprocess(image)
         if keyboard_contour is None:
@@ -57,9 +57,10 @@ def setup_and_calibrate(test = test):
             combined_image = combined_image.astype(np.uint8)
         else:
             if marker_Mode == "marker":
+                marker_img = cv2.imread('images/four_markers.png')
                 marker_img = cv2.resize(marker_img,( b_width, b_height))
             else:
-                marker_img = np.ones((int(image.shape[0]*0.9), int(image.shape[1]*0.9), 3), dtype=np.uint8) * 255 
+                marker_img = np.ones((b_height,b_width, 3), dtype=np.uint8) * 255 
             cv2.namedWindow("Marker_img", cv2.WINDOW_NORMAL)          
             cv2.setWindowProperty("Marker_img",
                         cv2.WND_PROP_FULLSCREEN,
@@ -76,7 +77,7 @@ def setup_and_calibrate(test = test):
         else:
             corners = detect_beamer_area(combined_image, image)
         print("detected beamer view")
-        display_img = visualize_keyboard_and_beamer(image, keyboard_contour, corners)
+        display_img = visualize_keyboard_and_beamer(combined_image, keyboard_contour, corners)
         #these are the corner coordinates for the beamer to display the keyboard
         newpt1, newpt2, newpt3, newpt4 = project_points(keyboard_contour, corners)
         

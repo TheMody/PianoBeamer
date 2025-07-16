@@ -107,12 +107,15 @@ class PianoKeyboardCV:
 
         # pass 1 – white keys
         for n in self.notes:
-            if self._is_white(n) and self.colours[n] != self._default_colours[n]:
+            if self._is_white(n): #and self.activated[n] > 0.0:
                 x = self._white_x[n]
-                cv2.rectangle(canvas, (x, 0), (x + WHITE_W, int(WHITE_H*self.activated[n])),
+                cv2.rectangle(canvas, (x, 0), (x + WHITE_W, int(WHITE_H)),
+                              self._default_colours[n], thickness=-1)
+                if self.activated[n] > 0.0:
+                   cv2.rectangle(canvas, (x, 0), (x + WHITE_W, int(WHITE_H*self.activated[n])),
                               self.colours[n], thickness=-1)
-                # cv2.rectangle(canvas, (x, 0), (x + self.WHITE_W, self.WHITE_H),
-                #               (0, 0, 0), thickness=self.OUTLINE_THICKNESS)
+                # cv2.rectangle(canvas, (x, 0), (x + WHITE_W, WHITE_H),
+                #               (0, 0, 0), thickness=3)
 
         # pass 2 – black keys
         for n in self.notes:
@@ -131,8 +134,11 @@ class PianoKeyboardCV:
                                 (x_left + BLACK_W, BLACK_H),
                                 self.colours[n], thickness=-1)
                 # cv2.rectangle(canvas, (x_left, 0),
-                #               (x_left + self.BLACK_W, self.BLACK_H),
-                #               (0, 0, 0), thickness=self.OUTLINE_THICKNESS)
+                #               (x_left + BLACK_W, BLACK_H),
+                #               (0, 0, 0), thickness=3)
+
+        if flip_keyboard:
+            canvas = cv2.flip(canvas, -1)
                 
         if self.H is not None:
             kb_new = np.zeros((b_height, b_width, 3), dtype=np.uint8)  # Create a blank image for the keyboard

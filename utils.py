@@ -67,7 +67,7 @@ def visualize_keyboard_and_beamer(image,keyboard_contour,beamer_contour):
     cv2.line(display_img, pt4, pt1, (0,255,0), 3, cv2.LINE_AA)
 
     #save the image with contours   
-    #cv2.imwrite("keyboard_beamer_contours.png", display_img)
+    cv2.imwrite("keyboard_beamer_contours.png", display_img)
 
     return display_img
     # # Show the image with contours
