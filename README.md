@@ -11,7 +11,7 @@ This code base includes a web app, so you can use your phone too controll which 
 Use pip to install all needed python packages.
 
 ```
-pip install mido, torch, opencv, transformers, Flask, albumentations
+pip install mido torch opencv transformers Flask albumentations
 ```
 # Usage
 
