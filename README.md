@@ -2,7 +2,9 @@
 
 Turn your old fashioned piano into a fancy new one. All you need is a USB Camera and a Beamer. Both should be placed above the piano looking down and have a good view on the keyboard. 
 
-The code base then uses fancy AI tools to detect the keyboard. Then the Beamer projects 
+The code base then uses fancy AI tools to detect the keyboard. Then the Beamer projects instructions onto you keyboard which tells you how to play your choosen song.
+
+This code base includes a web app, so you can use your phone too controll which music is projected. It should also work with a raspberry pi, as the computer hosting this. Which enables you to make it all plug and play.
 
 # Install
 
