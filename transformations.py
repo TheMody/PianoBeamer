@@ -35,6 +35,9 @@ def detect_keyboard_and_postprocess(image, visualize = True, refine = True):
     # detects a keyboard from an overhead view as best as possible
     mask = detect_keyboard(image) # this is an image filled with 1s and 0s, where 1s are the pixels that are part of the keyboard
 
+    if np.sum(mask) == 0:
+        print("No keyboard detected in the image.")
+        return None
     #find the four edge points of the keyboard
     #first get all indices of the mask where the value is 1 and try out different rotations
     def find_keyboard_axis_aligned(mask):
