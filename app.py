@@ -1,12 +1,15 @@
 from pathlib import Path
 from flask import (
     Flask, render_template, request,
-    redirect, url_for, flash, session
+    redirect, url_for, flash, session, send_file
 )
 from markupsafe import Markup  
 from main import setup_and_calibrate, play_song
 from collections import deque
 import builtins, functools
+import numpy as np
+import cv2
+import io
 # ----------------------------------
 # CONFIG ---------------------------------------------------------------
 # ----------------------------------------------------------------------
@@ -31,15 +34,15 @@ def tee_print(*args, **kwargs):
     LOG_BUFFER.append(message)
 
 builtins.print = tee_print   
-
+latest_snapshot = None 
 # ----------------------------------
 # DOMAIN-LEVEL “EVENT” FUNCTIONS --------------------------------------
 # (leave bodies empty for now – insert real logic later)
 # ----------------------------------------------------------------------
 def event_one():
     """Placeholder for first button."""
-    global kb
-    kb = setup_and_calibrate()
+    global kb, latest_snapshot
+    kb,latest_snapshot  = setup_and_calibrate()
     pass
 
 def event_two():
@@ -102,7 +105,7 @@ def trigger(name):
     match name:
         case "event_one":
             event_one()
-            flash("Event 1 executed.", "success")
+            flash("Calibrated camera and beamer setup.", "success")
         case "event_two":
             event_two()
             flash("Event 2 executed.", "success")
@@ -110,10 +113,34 @@ def trigger(name):
             flash(f"Unknown event {name!r}", "error")
     return redirect(url_for("index"))
 
+@app.route("/snapshot")
+def snapshot():
+    """
+    Return the most recent snapshot as PNG.
+    Called once per page load by refreshSnapshot() in index.html.
+    """
+    global latest_snapshot
+
+    if latest_snapshot is None:
+        # Fallback: return a 1×1 transparent PNG to avoid browser errors
+        latest_snapshot = np.zeros((1, 1, 4), dtype=np.uint8)
+
+    # Encode the NumPy image → PNG bytes in memory
+    ok, buf = cv2.imencode(".png", latest_snapshot)
+    if not ok:
+        # If encode failed, fall back to empty image
+        buf = cv2.imencode(".png", np.zeros((1, 1, 4), dtype=np.uint8))[1]
+
+    return send_file(
+        io.BytesIO(buf.tobytes()),
+        mimetype="image/png",
+        max_age=0,                # disable caching
+        as_attachment=False
+    )
 
 
 # ----------------------------------
 # ENTRY POINT ----------------------------------------------------------
 # ----------------------------------------------------------------------
 if __name__ == "__main__":
-    app.run(debug=False, host="0.0.0.0", port=5000, threaded = False)
+    app.run(debug=True, host="0.0.0.0", port=5000, threaded = False)

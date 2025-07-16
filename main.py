@@ -76,7 +76,7 @@ def setup_and_calibrate(test = True):
         else:
             corners = detect_beamer_area(combined_image, image)
         print("detected beamer view")
-        visualize_keyboard_and_beamer(image, keyboard_contour, corners)
+        display_img = visualize_keyboard_and_beamer(image, keyboard_contour, corners)
         #these are the corner coordinates for the beamer to display the keyboard
         newpt1, newpt2, newpt3, newpt4 = project_points(keyboard_contour, corners)
         
@@ -87,7 +87,7 @@ def setup_and_calibrate(test = True):
         H = cv2.getPerspectiveTransform(src_quad, dst_quad)
         kb.update_transform(H)
         print("calibrated successfully")
-        return kb
+        return kb, display_img
 
 def play_song(midi_file, kb, playback_speed=1.0):
     midi = mido.MidiFile(midi_file)
@@ -98,7 +98,7 @@ def play_song(midi_file, kb, playback_speed=1.0):
 
 
 if __name__ == "__main__":
-    kb = setup_and_calibrate()
+    kb, _ = setup_and_calibrate()
  
     play_song("midi_files/Fur Elise.mid", kb)
   #  play_song("midi_files/davy.mid", kb)

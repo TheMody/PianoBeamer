@@ -84,6 +84,18 @@
       </div>
     </div>
 
+    <!-- Live snapshot -------------------------------------------------- -->
+    <div class="row g-4 mt-3">
+      <div class="col-12">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title mb-3">Calibration Information (Red Dected Keyboard) (Green Detected Beamer Projection)</h5>
+            <img id="snapshot" src="{{ url_for('snapshot') }}" class="img-fluid border" alt="snapshot" />
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Server log -------------------------------------------------- -->
     <div class="row g-4 mt-3">
       <div class="col-12">
@@ -110,7 +122,7 @@
       });
     }
 
-    // ---- simple polling log viewer -------------------------------
+    // Fetch logs
     function fetchLogs() {
       fetch("{{ url_for('get_logs') }}")
         .then(resp => resp.text())
@@ -118,14 +130,25 @@
           const box = document.getElementById('logBox');
           if (box) {
             box.textContent = text;
-            box.scrollTop = box.scrollHeight;  // auto-scroll to bottom
+            box.scrollTop = box.scrollHeight;
           }
         })
         .catch(err => console.error("log fetch error", err));
     }
-    // Initial fetch + periodic refresh every 2 s
-    window.addEventListener('load', fetchLogs);
+
+    // Refresh snapshot without caching
+    function refreshSnapshot() {
+      const img = document.getElementById('snapshot');
+      if (img) {
+        img.src = "{{ url_for('snapshot') }}?t=" + Date.now();
+      }
+    }
+
+    window.addEventListener('load', () => {
+      fetchLogs();
+      refreshSnapshot();
+    });
     setInterval(fetchLogs, 2000);
-  </script>
+      </script>
 </body>
 </html>
