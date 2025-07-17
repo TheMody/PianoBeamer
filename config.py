@@ -10,14 +10,14 @@ c_width = 1920
 marker_px = 240  # side length of each marker, in pixels
 border_px = 50  # white border around every marker
 marker_Mode = "white" # "marker" white
-marker_threshold = 50 #set threshold higher for low light conditions, lower for bright conditions
+marker_threshold = 1.4 #proportional increase of light needed, set threshold higher for low light conditions, lower for bright conditions
 
 #keyboard parameters
 NUM_KEYS = 85  # number of keys on the keyboard
 WHITE_W, WHITE_H = 20, 100          # white-key geometry  (pixels)
 BLACK_W, BLACK_H = 12, 65           # black-key geometry  (pixels)
 LOOKAHEAD = 2.0  # seconds to look ahead in the animation
-flip_keyboard = False # flip the keyboard horizontally
+flip_keyboard = False # flip the keyboard in case the beamer and camera are viewing from behind the piano
 BLACK_KEYS_COLOR = (0,255,255)
 WHITE_KEYS_COLOR = (0,0,255)
 

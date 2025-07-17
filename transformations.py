@@ -138,8 +138,11 @@ def detect_beamer_area(image, background_img, threshold = marker_threshold):
     bg_gray = cv2.cvtColor(background_img, cv2.COLOR_BGR2GRAY)
     gray = gray.astype(float)
     bg_gray = bg_gray.astype(float)
-    gray = np.clip(gray - bg_gray, 0, 255)
+   # gray = np.clip(gray - bg_gray, 0, 255)
 
+    #calculate proportional increase
+    gray = gray / bg_gray
+    gray[bg_gray == 0] = 1.0  # reset pixels where bg_gray is 0 to avoid division by zero
     # cv2.imshow("Beamer Area Detection", gray.astype(np.uint8))
     # cv2.waitKey(0)
     # cv2.destroyAllWindows()

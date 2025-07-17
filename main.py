@@ -37,7 +37,7 @@ def setup_and_calibrate(test = test):
         # height, width = image.shape[:2]
         # scale_factor = 1200 / max(height, width)
         # image = cv2.resize(image, (int(width * scale_factor), int(height * scale_factor)))
-        # Detect keyboard
+        # First Poject and image to the beamer projection area
         if test:
             # Create a dummy input we can use as a test
             if marker_Mode == "marker":
@@ -67,21 +67,24 @@ def setup_and_calibrate(test = test):
             cv2.waitKey(50)
             cv2.destroyAllWindows()
 
-        keyboard_contour = detect_keyboard_and_postprocess(image)
-        if keyboard_contour is None:
-            print("Error: Could not detect keyboard in the image.")
-            return None
-        print("detected keyboard contour")
-
         #detect the beamer projection area
         if marker_Mode == "marker":
             corners = detect_four_markers(combined_image)#,background_img=image*0.9)
         else:
             corners = detect_beamer_area(combined_image, image)
         print("detected beamer view")
-        display_img = visualize_keyboard_and_beamer(combined_image, keyboard_contour, corners)
+
         #these are the corner coordinates for the beamer to display the keyboard
         
+        keyboard_contour = detect_keyboard_and_postprocess(image)
+        if keyboard_contour is None:
+            print("Error: Could not detect keyboard in the image.")
+            return None
+        print("detected keyboard contour")
+
+        display_img = visualize_keyboard_and_beamer(combined_image, keyboard_contour, corners)
+
+
         #calculate the transformation for the keyboard to camera space 
         kb = PianoKeyboardCV(start_midi=21, num_keys=NUM_KEYS)
         src_quad = np.array([[0,0], [kb.width, 0], [kb.width, kb.height], [0, kb.height]], dtype=np.float32)
