@@ -108,7 +108,7 @@ def extract_cornerpoints_from_mask(mask, refine = True):
                 cv2.fillConvexPoly(mask_copy, np.array(try_out_pts, dtype=np.int32), 2)
 
                 num_pixels = np.sum((mask_copy + rotated_mask) == 1)
-                if  num_pixels >= mask_pixels:
+                if  num_pixels >= mask_pixels - 3:  # allow for a small margin of error
                   #  min_area = area
                     pts = try_out_pts
                    # print(f"new best pts {pts_idx} num_pixels {num_pixels} mask_pixels {mask_pixels}")
