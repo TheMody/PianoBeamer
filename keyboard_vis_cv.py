@@ -126,10 +126,10 @@ class PianoKeyboardCV:
                     prev_white -= 1
                 x_left = (self._white_x[prev_white]
                           + WHITE_W - BLACK_W // 2)
-                if self.colours[n] != self._default_colours[n]:
+                if self.activated[n] > 0.0:
                     cv2.rectangle(canvas, (x_left, 0),
                                 (x_left + BLACK_W, int(BLACK_H*self.activated[n])),
-                                BLACK_KEYS_COLOR, thickness=-1)
+                                self.colours[n], thickness=-1)
                 else:
                     cv2.rectangle(canvas, (x_left, 0),
                                 (x_left + BLACK_W, BLACK_H),
@@ -287,7 +287,7 @@ def animate(events, keyboard, lookahead=0.5,playback_speed = 1, window_name='Pia
                 #     (255, 255, 255) if keyboard._is_white(note) else (0, 0, 0)
                 # )
                 default = (0,0,0)
-                red_pixel = (0, 0, 255)
+                red_pixel = WHITE_KEYS_COLOR if keyboard._is_white(note) else BLACK_KEYS_COLOR
                 blended = tuple(
                     int((1 - ratio) * d + ratio * r) for d, r in zip(default, red_pixel)
                 )
@@ -308,7 +308,7 @@ def animate(events, keyboard, lookahead=0.5,playback_speed = 1, window_name='Pia
             
         #  print("this iteration took", time.time() - t_last, "seconds")
             used_time = time.time() - t_last
-            if used_time < 0.01:
+            if used_time < 0.01*playback_speed:
                 time.sleep(0.01 - used_time)                       # ~100 fps cap
     finally:
         cv2.destroyAllWindows()

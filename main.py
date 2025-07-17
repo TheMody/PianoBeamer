@@ -1,11 +1,10 @@
 import cv2
 import numpy as np
 
-import time
 from marker import detect_four_markers
 from keyboard_vis_cv import PianoKeyboardCV
 from config import *
-from transformations import detect_keyboard_and_postprocess, project_points, detect_beamer_area
+from transformations import detect_keyboard_and_postprocess, detect_beamer_area
 import mido
 from keyboard_vis_cv import animate, extract_events
 from utils import capture_img, visualize_keyboard_and_beamer
@@ -22,31 +21,23 @@ def setup_and_calibrate(test = test):
                     cv2.WND_PROP_FULLSCREEN,
                     cv2.WINDOW_FULLSCREEN)
         cv2.imshow("black_img",black_img)
-        cv2.waitKey(250)
+        cv2.waitKey(150)
         image = capture_img(WEBCAM_ID)
-        cv2.waitKey(100) 
+        cv2.waitKey(50) 
         cv2.destroyAllWindows()
         print("captured image")
         cv2.imshow("captured image", image)
         cv2.waitKey()  # wait for a second to see the image 
         cv2.destroyAllWindows()
 
-  
-
     # rescale image to a reasonable size
     if image is None:
         print("Error: Could not load/capture image.")
     else:
-        height, width = image.shape[:2]
+        # height, width = image.shape[:2]
         # scale_factor = 1200 / max(height, width)
         # image = cv2.resize(image, (int(width * scale_factor), int(height * scale_factor)))
         # Detect keyboard
-        keyboard_contour = detect_keyboard_and_postprocess(image)
-        if keyboard_contour is None:
-            print("Error: Could not detect keyboard in the image.")
-            return None
-        print("detected keyboard contour")
-
         if test:
             # Create a dummy input we can use as a test
             if marker_Mode == "marker":
@@ -71,10 +62,16 @@ def setup_and_calibrate(test = test):
                         cv2.WND_PROP_FULLSCREEN,
                         cv2.WINDOW_FULLSCREEN)
             cv2.imshow("Marker_img",marker_img)
-            cv2.waitKey(250)
+            cv2.waitKey(150)
             combined_image = capture_img(WEBCAM_ID)
-            cv2.waitKey(100)
+            cv2.waitKey(50)
             cv2.destroyAllWindows()
+
+        keyboard_contour = detect_keyboard_and_postprocess(image)
+        if keyboard_contour is None:
+            print("Error: Could not detect keyboard in the image.")
+            return None
+        print("detected keyboard contour")
 
         #detect the beamer projection area
         if marker_Mode == "marker":
