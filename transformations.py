@@ -140,9 +140,9 @@ def detect_beamer_area(image, background_img, threshold = marker_threshold):
     bg_gray = bg_gray.astype(float)
     gray = np.clip(gray - bg_gray, 0, 255)
 
-    cv2.imshow("Beamer Area Detection", gray.astype(np.uint8))
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    # cv2.imshow("Beamer Area Detection", gray.astype(np.uint8))
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
     #blur the image
     gray = cv2.GaussianBlur(gray, (5, 5), 0)
     #threshold the image to create a mask
@@ -150,17 +150,17 @@ def detect_beamer_area(image, background_img, threshold = marker_threshold):
 
     pt1, pt2, pt3, pt4 = extract_cornerpoints_from_mask(mask, refine=True)   
 
-    display_img = mask.astype(np.uint8) * 255
-    display_img = cv2.cvtColor(display_img, cv2.COLOR_GRAY2BGR)
+    # display_img = mask.astype(np.uint8) * 255
+    # display_img = cv2.cvtColor(display_img, cv2.COLOR_GRAY2BGR)
 
-    cv2.line(display_img, pt1, pt2, (0,0,255), 3, cv2.LINE_AA)
-    cv2.line(display_img, pt2, pt3, (0,0,255), 3, cv2.LINE_AA)
-    cv2.line(display_img, pt3, pt4, (0,0,255), 3, cv2.LINE_AA)
-    cv2.line(display_img, pt4, pt1, (0,0,255), 3, cv2.LINE_AA)
+    # cv2.line(display_img, pt1, pt2, (0,0,255), 3, cv2.LINE_AA)
+    # cv2.line(display_img, pt2, pt3, (0,0,255), 3, cv2.LINE_AA)
+    # cv2.line(display_img, pt3, pt4, (0,0,255), 3, cv2.LINE_AA)
+    # cv2.line(display_img, pt4, pt1, (0,0,255), 3, cv2.LINE_AA)
 
-    cv2.imshow("Beamer Area Detection", display_img)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    # cv2.imshow("Beamer Area Detection", display_img)
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
 
     return (pt1, pt2, pt3, pt4)
 
@@ -183,54 +183,3 @@ def detect_keyboard_and_postprocess(image, refine = True):
 
     return (pt1, pt2, pt3, pt4)
 
-def project_points(keyboard_contour, corners):
-    """
-    Projects the keyboard contour points into the beamer perspective based on the detected corners.
-    Args:
-        keyboard_contour (list): List of points representing the keyboard contour.
-        corners (list): List of points representing the detected corners.
-    Returns:
-        tuple: Transformed points in the beamer perspective.
-    """
-
-    pt1, pt2, pt3, pt4 = keyboard_contour
-
-    # cv2.line(image, pt1, pt2, (0,0,255), 3, cv2.LINE_AA)
-    # cv2.line(image, pt2, pt3, (0,0,255), 3, cv2.LINE_AA)
-    # cv2.line(image, pt3, pt4, (0,0,255), 3, cv2.LINE_AA)
-    # cv2.line(image, pt4, pt1, (0,0,255), 3, cv2.LINE_AA)
-
-#   cv2.imwrite("output_image.png", image)
-
-    cpt1, cpt2, cpt3, cpt4 = corners[0], corners[1], corners[2], corners[3] #(top-left, top-right, bottom-right, bottom-left)
-    cpt1 = np.asarray(tuple(map(int, cpt1)))
-    cpt2 = np.asarray(tuple(map(int, cpt2)))
-    cpt3 = np.asarray(tuple(map(int, cpt3)))
-    cpt4 = np.asarray(tuple(map(int, cpt4)))
-
-    # cv2.line(image, cpt1, cpt2, (0,0,255), 3, cv2.LINE_AA)
-    # cv2.line(image, cpt2, cpt3, (0,0,255), 3, cv2.LINE_AA)
-    # cv2.line(image, cpt3, cpt4, (0,0,255), 3, cv2.LINE_AA)
-    # cv2.line(image, cpt4, cpt1, (0,0,255), 3, cv2.LINE_AA)
-
-    #first warp keyboard points into beamer perspective
-    #calculate transfrom from camera coordinates to beamer coordinates
-    
-    #first shift coordinates to origin of cpt1
-    pt1 = pt1 - cpt1
-    pt2 = pt2 - cpt1
-    pt3 = pt3 - cpt1
-    pt4 = pt4 - cpt1
-
-    #calculate the basis vectors for the beamer coordinates
-    first_basis_vector = np.asarray(cpt2-cpt1) 
-    first_basis_vector = first_basis_vector / np.linalg.norm(first_basis_vector) * (b_width / np.linalg.norm(first_basis_vector))
-    second_basis_vector = np.asarray(cpt4-cpt1) 
-    second_basis_vector = second_basis_vector /np.linalg.norm(second_basis_vector)  * (b_height/np.linalg.norm(second_basis_vector))
-
-    newpt1 = (pt1 @ first_basis_vector , pt1 @ second_basis_vector)
-    newpt2 = (pt2 @ first_basis_vector , pt2 @ second_basis_vector)
-    newpt3 = (pt3 @ first_basis_vector , pt3 @ second_basis_vector)
-    newpt4 = (pt4 @ first_basis_vector , pt4 @ second_basis_vector) 
-
-    return newpt1, newpt2, newpt3, newpt4

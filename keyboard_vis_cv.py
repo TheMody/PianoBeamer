@@ -88,8 +88,9 @@ class PianoKeyboardCV:
         self.width = x
         self.height = WHITE_H
 
-    def update_transform(self,H):
+    def update_transform(self,H, H_2):
         self.H  = H
+        self.H_2 = H_2
 
     def _render(self, add_frame = test):
         canvas = np.full((self.height, self.width, 3),
@@ -128,7 +129,7 @@ class PianoKeyboardCV:
                 if self.colours[n] != self._default_colours[n]:
                     cv2.rectangle(canvas, (x_left, 0),
                                 (x_left + BLACK_W, int(BLACK_H*self.activated[n])),
-                                (0,255,255), thickness=-1)
+                                BLACK_KEYS_COLOR, thickness=-1)
                 else:
                     cv2.rectangle(canvas, (x_left, 0),
                                 (x_left + BLACK_W, BLACK_H),
@@ -141,12 +142,12 @@ class PianoKeyboardCV:
             canvas = cv2.flip(canvas, -1)
                 
         if self.H is not None:
-            kb_new = np.zeros((b_height, b_width, 3), dtype=np.uint8)  # Create a blank image for the keyboard
-            kb_new[:self.height, :self.width] = canvas
-            display_img = cv2.warpPerspective(kb_new, self.H, (b_width, b_height))
+            key_board_camera_perspective = cv2.warpPerspective(canvas, self.H_2, (c_width, c_height))
+            display_img = cv2.warpPerspective(key_board_camera_perspective, self.H, (b_width, b_height))
             self.img = display_img
         else:
             self.img = canvas
+
 
     # utility ---------------------------------------------------------------
     @staticmethod

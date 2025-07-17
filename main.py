@@ -84,15 +84,33 @@ def setup_and_calibrate(test = test):
         print("detected beamer view")
         display_img = visualize_keyboard_and_beamer(combined_image, keyboard_contour, corners)
         #these are the corner coordinates for the beamer to display the keyboard
-        newpt1, newpt2, newpt3, newpt4 = project_points(keyboard_contour, corners)
         
-        #calculate the transformation for the keyboard to display 
+        #calculate the transformation for the keyboard to camera space 
         kb = PianoKeyboardCV(start_midi=21, num_keys=NUM_KEYS)
         src_quad = np.array([[0,0], [kb.width, 0], [kb.width, kb.height], [0, kb.height]], dtype=np.float32)
-        dst_quad = np.array([newpt1, newpt2, newpt3, newpt4], dtype=np.float32)
+        dst_quad = np.array(keyboard_contour, dtype=np.float32)
+        H_2 = cv2.getPerspectiveTransform(src_quad, dst_quad)
+
+        #calculate the transformation from camera space to beamer space
+        src_quad = np.array(corners, dtype=np.float32)
+        dst_quad = np.array([[0,0], [b_width, 0], [b_width, b_height], [0, b_height]], dtype=np.float32)
         H = cv2.getPerspectiveTransform(src_quad, dst_quad)
-        kb.update_transform(H)
+        kb.update_transform(H, H_2)
         print("calibrated successfully")
+
+        #visualize the keyboard on the beamer projection area good for debugging
+        # kb._render()
+        # keyboard_img = kb.img
+        # src_quad = np.array([[0,0], [b_width, 0], [b_width, b_height], [0, b_height]], dtype=np.float32)
+        # dst_quad = np.array(corners, dtype=np.float32)
+        # H_2 = cv2.getPerspectiveTransform(src_quad, dst_quad)
+        # display_img = cv2.warpPerspective(keyboard_img, H_2, (width, height))
+        # display_img = cv2.addWeighted(image, 0.5, display_img, 0.5, 0)
+
+        # cv2.imshow("display_img", display_img)
+        # cv2.waitKey(0)
+        # cv2.destroyAllWindows()
+
         return kb, display_img
 
 def play_song(midi_file, kb, playback_speed=1.0):
