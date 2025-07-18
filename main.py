@@ -11,9 +11,24 @@ from utils import capture_img, visualize_keyboard_and_beamer
 import time
 
 
+def recalibrate(kb,keyboard_edge_points, beamer_edge_points):
+        src_quad = np.array([[0,0], [kb.width, 0], [kb.width, kb.height], [0, kb.height]], dtype=np.float32)
+        dst_quad = np.array(keyboard_edge_points, dtype=np.float32)
+        H_2 = cv2.getPerspectiveTransform(src_quad, dst_quad)
+
+        #calculate the transformation from camera space to beamer space
+        src_quad = np.array(beamer_edge_points, dtype=np.float32)
+        dst_quad = np.array([[0,0], [b_width, 0], [b_width, b_height], [0, b_height]], dtype=np.float32)
+        H = cv2.getPerspectiveTransform(src_quad, dst_quad)
+        kb.update_transform(H, H_2)
+        print("calibrated successfully")
+
+        return
+
 def setup_and_calibrate(test = test):
     if test:
         image = cv2.imread('images/challenging_example.png')
+        image = cv2.resize(image, (c_width, c_height))
         print("loaded images")
     else:
         black_img = np.zeros((b_height, b_width, 3), dtype=np.uint8)
@@ -114,7 +129,7 @@ def setup_and_calibrate(test = test):
         # cv2.waitKey(0)
         # cv2.destroyAllWindows()
 
-        return kb, display_img
+        return kb, combined_image, keyboard_contour, corners
 
 def play_song(midi_file, kb, playback_speed=1.0):
     midi = mido.MidiFile(midi_file)
@@ -125,7 +140,7 @@ def play_song(midi_file, kb, playback_speed=1.0):
 
 
 if __name__ == "__main__":
-    kb, _ = setup_and_calibrate()
+    kb, _, _ , _ = setup_and_calibrate()
  
     play_song("midi_files/Fur Elise.mid", kb)
   #  play_song("midi_files/davy.mid", kb)

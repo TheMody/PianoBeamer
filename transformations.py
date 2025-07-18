@@ -167,17 +167,17 @@ def detect_beamer_area(image, background_img, threshold = marker_threshold):
 
     pt1, pt2, pt3, pt4 = extract_cornerpoints_from_mask(mask, refine=True)   
 
-    display_img = mask.astype(np.uint8) * 255
-    display_img = cv2.cvtColor(display_img, cv2.COLOR_GRAY2BGR)
+    # display_img = mask.astype(np.uint8) * 255
+    # display_img = cv2.cvtColor(display_img, cv2.COLOR_GRAY2BGR)
 
-    cv2.line(display_img, pt1, pt2, (0,0,255), 3, cv2.LINE_AA)
-    cv2.line(display_img, pt2, pt3, (0,0,255), 3, cv2.LINE_AA)
-    cv2.line(display_img, pt3, pt4, (0,0,255), 3, cv2.LINE_AA)
-    cv2.line(display_img, pt4, pt1, (0,0,255), 3, cv2.LINE_AA)
+    # cv2.line(display_img, pt1, pt2, (0,0,255), 3, cv2.LINE_AA)
+    # cv2.line(display_img, pt2, pt3, (0,0,255), 3, cv2.LINE_AA)
+    # cv2.line(display_img, pt3, pt4, (0,0,255), 3, cv2.LINE_AA)
+    # cv2.line(display_img, pt4, pt1, (0,0,255), 3, cv2.LINE_AA)
 
-    cv2.imshow("Beamer Area Detection", display_img)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    # cv2.imshow("Beamer Area Detection", display_img)
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
 
     return (pt1, pt2, pt3, pt4)
 

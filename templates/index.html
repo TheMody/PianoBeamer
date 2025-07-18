@@ -96,8 +96,25 @@
       <div class="col-12">
         <div class="card shadow-sm">
           <div class="card-body">
-            <h5 class="card-title mb-3">Calibration Information (Red Dected Keyboard) (Green Detected Beamer Projection)</h5>
-            <img id="snapshot" src="{{ url_for('snapshot') }}" class="img-fluid border" alt="snapshot" />
+            <h5 class="card-title mb-3">
+              Calibration&nbsp;Information<br>
+              <small class="text-muted">Red = Keyboard corners · Green = Beamer corners</small>
+            </h5>
+
+            <!-- wrapper gives us position:relative to stack SVG on top -->
+            <div class="position-relative w-100">
+              <img id="snapshot"
+                  src="{{ url_for('snapshot') }}"
+                  class="img-fluid border w-100"
+                  alt="snapshot" />
+
+              <!-- overlay fills exactly the snapshot’s client rectangle may need to change viewbox size-->
+              <svg id="overlay"
+                  class="position-absolute top-0 start-0 w-100 h-100"
+                  viewBox="0 0 1280 720"          
+                  preserveAspectRatio="none">
+              </svg>
+            </div>
           </div>
         </div>
       </div>
@@ -156,6 +173,98 @@
       refreshSnapshot();
     });
     setInterval(fetchLogs, 2000);
+
+
+    /* ---------- overlay drawing & dragging --------------------------- */
+const ovr   = document.getElementById("overlay");
+const rad   = 6;                          // handle radius in SVG units
+let   sets;                               // fetched from /edge_points
+
+function drawOverlay() {
+  if (!ovr || !sets) return;
+
+  // wipe previous elements
+  ovr.innerHTML = "";
+
+  for (const [key, pts] of Object.entries(sets)) {
+    const color = key === "keyboard" ? "#ff3333" : "#33ff33";
+
+    // draw polygon
+    const poly = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+    poly.setAttribute("points", pts.map(p => `${p.x},${p.y}`).join(" "));
+    poly.setAttribute("fill", "none");
+    poly.setAttribute("stroke", color);
+    poly.setAttribute("stroke-width", 2);
+    ovr.appendChild(poly);
+
+    // draw draggable circles
+    pts.forEach((p, idx) => {
+      const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      c.setAttribute("cx", p.x);
+      c.setAttribute("cy", p.y);
+      c.setAttribute("r", rad);
+      c.setAttribute("fill", color);
+      c.style.cursor = "move";
+      c.dataset.set  = key;
+      c.dataset.idx  = idx;
+      ovr.appendChild(c);
+    });
+  }
+}
+
+function startDrag(ev) {
+  if (ev.target.tagName !== "circle") return;
+
+  const circle = ev.target;
+  const setKey = circle.dataset.set;
+  const idx    = +circle.dataset.idx;
+
+  function onMove(e) {
+    const pt = ovr.createSVGPoint();
+    pt.x = e.clientX; pt.y = e.clientY;
+    const { x, y } = pt.matrixTransform(ovr.getScreenCTM().inverse());
+
+    sets[setKey][idx].x = x;
+    sets[setKey][idx].y = y;
+
+    circle.setAttribute("cx", x);
+    circle.setAttribute("cy", y);
+
+    // update polygon outline
+    drawOverlay();
+  }
+
+  function onUp() {
+    document.removeEventListener("pointermove", onMove);
+    document.removeEventListener("pointerup",   onUp);
+    pushUpdate();             // send new points to server
+  }
+
+  document.addEventListener("pointermove", onMove);
+  document.addEventListener("pointerup",   onUp);
+}
+
+function pushUpdate() {
+  fetch("/edge_points", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(sets)
+  })
+  .then(r => r.json())
+  .then(resp => console.log("update ok", resp))
+  .catch(console.error);
+}
+
+// fetch initial sets, then draw
+function initOverlay() {
+  fetch("/edge_points")
+    .then(r => r.json())
+    .then(json => { sets = json; drawOverlay(); })
+    .catch(console.error);
+}
+
+ovr?.addEventListener("pointerdown", startDrag);
+window.addEventListener("load", initOverlay);
       </script>
 </body>
 </html>

@@ -1,5 +1,6 @@
 
 import cv2
+from config import *
 #from config import WEBCAM_ID
 
 def list_available_cams(max_index: int = 10, backend=cv2.CAP_ANY) -> list[int]:
@@ -31,8 +32,8 @@ def capture_img(cam_index: int = 4, backend = cv2.CAP_DSHOW): #cv2.CAP_ANY):
     # 1. Open the device in the constructor
     cap = cv2.VideoCapture(cam_index, backend)
 
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, c_width)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, c_height)
 
     if not cap.isOpened():          # <- returns immediately if the open failed
         print(f"Cannot open camera (index {cam_index})")

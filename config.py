@@ -3,8 +3,8 @@ b_height = 1080
 b_width = 1920
 
 #camera parameters
-c_height = 1080
-c_width = 1920
+c_height = 720
+c_width = 1280
 
 #marker parameters
 marker_px = 240  # side length of each marker, in pixels

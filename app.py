@@ -4,7 +4,7 @@ from flask import (
     redirect, url_for, flash, session, send_file
 )
 from markupsafe import Markup  
-from main import setup_and_calibrate, play_song
+from main import setup_and_calibrate, play_song, recalibrate
 from collections import deque
 import builtins, functools
 import numpy as np
@@ -36,14 +36,27 @@ def tee_print(*args, **kwargs):
 
 builtins.print = tee_print   
 latest_snapshot = None 
+
+
+edge_sets = {
+    "keyboard":  [(10, 10), (630, 10), (630, 470), (10, 470)],   # default
+    "beamer":    [(20, 20), (620, 30), (620, 460), (30, 460)],
+}
+
+# --- helper to JSON-serialize tuples --------------------------------
+def _as_dict():
+    return {k: [dict(x=int(x), y=int(y)) for x, y in pts] for k, pts in edge_sets.items()}
+
 # ----------------------------------
 # DOMAIN-LEVEL “EVENT” FUNCTIONS --------------------------------------
 # (leave bodies empty for now – insert real logic later)
 # ----------------------------------------------------------------------
 def event_one():
     """Placeholder for first button."""
-    global kb, latest_snapshot
-    kb,latest_snapshot  = setup_and_calibrate()
+    global kb, latest_snapshot, edge_sets
+    kb,latest_snapshot, keyboard_edges, beamer_edges  = setup_and_calibrate()
+    edge_sets['keyboard'] = keyboard_edges
+    edge_sets['beamer'] = beamer_edges
     pass
 
 def event_two():
@@ -129,6 +142,21 @@ def download_url():
     except Exception as e:
         flash(f"Error processing URL: {e}", "error")
     return redirect(url_for("index"))
+
+@app.get("/edge_points")
+def get_edge_points():
+    return _as_dict()     # Flask will jsonify the dict automatically
+
+@app.post("/edge_points")
+def update_edge_points():
+    global kb, edge_sets
+    data = request.json
+    edge_sets['keyboard'] = [(p['x'], p['y']) for p in data['keyboard']]
+    edge_sets['beamer']   = [(p['x'], p['y']) for p in data['beamer']]
+
+    recalibrate(kb, edge_sets['keyboard'], edge_sets['beamer'])
+   # flash("Edge points updated ✔", "success")
+    return {"ok": True}
 
 @app.route("/snapshot")
 def snapshot():
