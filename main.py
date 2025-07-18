@@ -27,7 +27,7 @@ def setup_and_calibrate(test = test):
         cv2.waitKey(50) 
         cv2.destroyAllWindows()
         print("captured image")
-        cv2.imwrite("images/image"+str(time.time())+".png", image)
+     #   cv2.imwrite("images/image"+str(time.time())+".png", image)
         # cv2.imshow("captured image", image)
         # cv2.waitKey()  # wait for a second to see the image 
         # cv2.destroyAllWindows()
@@ -66,7 +66,7 @@ def setup_and_calibrate(test = test):
             cv2.imshow("Marker_img",marker_img)
             cv2.waitKey(350)
             combined_image = capture_img(WEBCAM_ID)
-            cv2.imwrite("images/ligthed_image"+str(time.time())+".png", combined_image)
+        #    cv2.imwrite("images/ligthed_image"+str(time.time())+".png", combined_image)
             cv2.waitKey(50)
             cv2.destroyAllWindows()
 
