@@ -31,7 +31,7 @@ def calculate_area(pt1, pt2, pt3, pt4):
     area = triangle_area(pt1, pt2, pt3) + triangle_area(pt1, pt3, pt4)
     return area
 
-def extract_cornerpoints_from_mask(mask, refine = True):
+def extract_cornerpoints_from_mask(mask, refine = True, margin = 0.99):
 
     #find the four edge points of the keyboard
     #first get all indices of the mask where the value is 1 and try out different rotations
@@ -83,7 +83,7 @@ def extract_cornerpoints_from_mask(mask, refine = True):
         #try out slightly smaller area
         pts_available = [0,1,2,3,4,5,6,7]
         pts = [pt1, pt2, pt3, pt4]
-        step = 2
+        step = 1
         mask_pixels = np.sum(rotated_mask == 255)
         while len(pts_available) >= 1:
             for pts_idx in pts_available:
@@ -108,11 +108,11 @@ def extract_cornerpoints_from_mask(mask, refine = True):
                 cv2.fillConvexPoly(mask_copy, np.array(try_out_pts, dtype=np.int32), 2)
 
                 num_pixels = np.sum((mask_copy + rotated_mask) == 1)
-                if  num_pixels >= mask_pixels - 3:  # allow for a small margin of error
+                if  num_pixels >= mask_pixels *margin:  # allow for a small margin of error
                   #  min_area = area
                     pts = try_out_pts
-                   # print(f"new best pts {pts_idx} num_pixels {num_pixels} mask_pixels {mask_pixels}")
-                 #   print(pts)
+                    # print(f"new best pts {pts_idx} num_pixels {num_pixels} mask_pixels {mask_pixels}")
+                    # print(pts)
                 else:
                    # print(f"Skipping pts {pts_idx}num_pixels {num_pixels} mask_pixels {mask_pixels}")
                     pts_available.remove(pts_idx)
@@ -138,32 +138,32 @@ def detect_beamer_area(image, background_img, threshold = marker_threshold):
     bg_gray = cv2.cvtColor(background_img, cv2.COLOR_BGR2GRAY)
     gray = gray.astype(float)
     bg_gray = bg_gray.astype(float)
-   # gray = np.clip(gray - bg_gray, 0, 255)
+    gray = np.clip(gray - bg_gray, 0, 255)
 
     #calculate proportional increase
-    gray = gray / bg_gray
-    gray[bg_gray == 0] = 1.0  # reset pixels where bg_gray is 0 to avoid division by zero
+  #  gray = gray / bg_gray
+  #  gray[bg_gray == 0] = 1.0  # reset pixels where bg_gray is 0 to avoid division by zero
     # cv2.imshow("Beamer Area Detection", gray.astype(np.uint8))
     # cv2.waitKey(0)
     # cv2.destroyAllWindows()
     #blur the image
-    gray = cv2.GaussianBlur(gray, (5, 5), 0)
+    gray = cv2.GaussianBlur(gray, (7, 7), 0)
     #threshold the image to create a mask
     mask = gray > threshold  # Adjust threshold as needed
 
     pt1, pt2, pt3, pt4 = extract_cornerpoints_from_mask(mask, refine=True)   
 
-    # display_img = mask.astype(np.uint8) * 255
-    # display_img = cv2.cvtColor(display_img, cv2.COLOR_GRAY2BGR)
+    display_img = mask.astype(np.uint8) * 255
+    display_img = cv2.cvtColor(display_img, cv2.COLOR_GRAY2BGR)
 
-    # cv2.line(display_img, pt1, pt2, (0,0,255), 3, cv2.LINE_AA)
-    # cv2.line(display_img, pt2, pt3, (0,0,255), 3, cv2.LINE_AA)
-    # cv2.line(display_img, pt3, pt4, (0,0,255), 3, cv2.LINE_AA)
-    # cv2.line(display_img, pt4, pt1, (0,0,255), 3, cv2.LINE_AA)
+    cv2.line(display_img, pt1, pt2, (0,0,255), 3, cv2.LINE_AA)
+    cv2.line(display_img, pt2, pt3, (0,0,255), 3, cv2.LINE_AA)
+    cv2.line(display_img, pt3, pt4, (0,0,255), 3, cv2.LINE_AA)
+    cv2.line(display_img, pt4, pt1, (0,0,255), 3, cv2.LINE_AA)
 
-    # cv2.imshow("Beamer Area Detection", display_img)
-    # cv2.waitKey(0)
-    # cv2.destroyAllWindows()
+    cv2.imshow("Beamer Area Detection", display_img)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
     return (pt1, pt2, pt3, pt4)
 
@@ -176,7 +176,7 @@ def detect_keyboard_and_postprocess(image, refine = True):
         return None
     
     # Extract corner points from the mask
-    pt1, pt2, pt3, pt4 = extract_cornerpoints_from_mask(mask, refine=refine)
+    pt1, pt2, pt3, pt4 = extract_cornerpoints_from_mask(mask, refine=refine, margin = 0.999)
     
     # if visualize:
     #     image = image.astype(np.float32)  # Convert image to float32 for overlaying mask
