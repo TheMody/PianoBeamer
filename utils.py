@@ -28,7 +28,7 @@ def list_available_cams(max_index: int = 10, backend=cv2.CAP_ANY) -> list[int]:
         cap.release()
     return found
 
-def capture_img(cam_index: int = 4, backend = cv2.CAP_DSHOW): #cv2.CAP_ANY):
+def capture_img(cam_index: int = 4, backend = cv2.CAP_ANY): #cv2.CAP_ANY):
     # 1. Open the device in the constructor
     cap = cv2.VideoCapture(cam_index, backend)
 

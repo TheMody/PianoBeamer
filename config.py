@@ -17,11 +17,11 @@ NUM_KEYS = 85  # number of keys on the keyboard
 WHITE_W, WHITE_H = 20, 100          # white-key geometry  (pixels)
 BLACK_W, BLACK_H = 12, 65           # black-key geometry  (pixels)
 LOOKAHEAD = 2.0  # seconds to look ahead in the animation
-flip_keyboard = False # flip the keyboard in case the beamer and camera are viewing from behind the piano
+flip_keyboard = True # flip the keyboard in case the beamer and camera are viewing from behind the piano
 BLACK_KEYS_COLOR = (0,255,255)
 WHITE_KEYS_COLOR = (0,0,255)
 
 #other parameters
 LEADTIME_SONG = 2.0
-WEBCAM_ID = 4
-test = True
+WEBCAM_ID = 0
+test = False
