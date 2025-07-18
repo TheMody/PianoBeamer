@@ -85,22 +85,30 @@ def extract_cornerpoints_from_mask(mask, refine = True, margin = 0.99):
         pts = [pt1, pt2, pt3, pt4]
         step = 1
         mask_pixels = np.sum(rotated_mask == 255)
-        while len(pts_available) >= 1:
-            for pts_idx in pts_available:
-                try_out_pts = pts.copy()
-                if pts_idx // 4 == 0:
+
+        def try_out_pts_calc(pts, pts_idx):
+            try_out_pts = pts.copy()
+
+            if pts_idx // 4 == 0:
                     first, second = 1, 0
-                else:
-                    first, second = 0, 1
-                if pts_idx % 4 == 0:
-                    try_out_pts[pts_idx % 4] = (try_out_pts[pts_idx % 4][0] + step * first, try_out_pts[pts_idx % 4][1] + step * second)
-                if pts_idx % 4 == 1:
-                    try_out_pts[pts_idx % 4] = (try_out_pts[pts_idx % 4][0] - step* first, try_out_pts[pts_idx % 4][1] + step* second)
-                if pts_idx % 4 == 2:
-                    try_out_pts[pts_idx % 4] = (try_out_pts[pts_idx % 4][0] - step* first, try_out_pts[pts_idx % 4][1] - step* second)
-                if pts_idx % 4 == 3:
-                    try_out_pts[pts_idx % 4] = (try_out_pts[pts_idx % 4][0] + step* first, try_out_pts[pts_idx % 4][1] - step* second)
-                
+            else:
+                first, second = 0, 1
+            if pts_idx % 4 == 0:
+                try_out_pts[pts_idx % 4] = (try_out_pts[pts_idx % 4][0] + step * first, try_out_pts[pts_idx % 4][1] + step * second)
+            if pts_idx % 4 == 1:
+                try_out_pts[pts_idx % 4] = (try_out_pts[pts_idx % 4][0] - step* first, try_out_pts[pts_idx % 4][1] + step* second)
+            if pts_idx % 4 == 2:
+                try_out_pts[pts_idx % 4] = (try_out_pts[pts_idx % 4][0] - step* first, try_out_pts[pts_idx % 4][1] - step* second)
+            if pts_idx % 4 == 3:
+                try_out_pts[pts_idx % 4] = (try_out_pts[pts_idx % 4][0] + step* first, try_out_pts[pts_idx % 4][1] - step* second)
+            
+            return try_out_pts
+
+        while len(pts_available) >= 1:
+            options = {}
+            for pts_idx in pts_available:
+                try_out_pts = try_out_pts_calc(pts, pts_idx)
+               
                # area = calculate_area(*try_out_pts)
                 #also check if number of pixels in the mask is still the same
                 #first select all pixels in the mask that are in the area marked by the tryoutpts
@@ -108,14 +116,20 @@ def extract_cornerpoints_from_mask(mask, refine = True, margin = 0.99):
                 cv2.fillConvexPoly(mask_copy, np.array(try_out_pts, dtype=np.int32), 2)
 
                 num_pixels = np.sum((mask_copy + rotated_mask) == 1)
-                if  num_pixels >= mask_pixels *margin:  # allow for a small margin of error
-                  #  min_area = area
-                    pts = try_out_pts
-                    # print(f"new best pts {pts_idx} num_pixels {num_pixels} mask_pixels {mask_pixels}")
-                    # print(pts)
+                if num_pixels >= mask_pixels *margin:
+                    options[pts_idx] = num_pixels
                 else:
-                   # print(f"Skipping pts {pts_idx}num_pixels {num_pixels} mask_pixels {mask_pixels}")
                     pts_available.remove(pts_idx)
+
+            if len(options) > 0:
+                max_num_pixels = 0
+                for pts_idx in options.keys():
+                    if options[pts_idx] > max_num_pixels:
+                        max_num_pixels = options[pts_idx]
+                        best_idx = pts_idx
+
+                pts = try_out_pts_calc(pts, best_idx)
+
 
         pts_rot = np.array(pts, dtype=np.float32).reshape(-1, 1, 2)
         pts_orig = cv2.transform(pts_rot, rotation_matrix_inv)  # still (N,1,2)
