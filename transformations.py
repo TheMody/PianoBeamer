@@ -31,7 +31,7 @@ def calculate_area(pt1, pt2, pt3, pt4):
     area = triangle_area(pt1, pt2, pt3) + triangle_area(pt1, pt3, pt4)
     return area
 
-def extract_cornerpoints_from_mask(mask, refine = True, margin = 0.99):
+def extract_cornerpoints_from_mask(mask, refine = True, margin = 0.995):
 
     #find the four edge points of the keyboard
     #first get all indices of the mask where the value is 1 and try out different rotations
