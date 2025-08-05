@@ -1,6 +1,8 @@
 
 import cv2
 from config import *
+import numpy as np
+import os
 #from config import WEBCAM_ID
 
 def list_available_cams(max_index: int = 10, backend=cv2.CAP_ANY) -> list[int]:
@@ -83,7 +85,7 @@ def visualize_keyboard_and_beamer(image,keyboard_contour,beamer_contour):
     # cv2.destroyAllWindows()
 
 
-def save_parameters(keyboard_contour, beamer_contour,camera_distortion = None, filename="calibration_params.txt"):
+def save_parameters(keyboard_contour, beamer_contour,camera_distortion = None, filename=parameter_file):
     """
     Save the keyboard and beamer contours to a text file.
     """
@@ -96,12 +98,8 @@ def save_parameters(keyboard_contour, beamer_contour,camera_distortion = None, f
         for pt in beamer_contour:
             f.write(f"{pt[0]},{pt[1]}\n")
 
-        if camera_distortion is not None:
-            f.write("\nCamera Distortion:\n")
-            for param in camera_distortion:
-                f.write(f"{param}\n")
 
-def load_parameters(filename="calibration_params.txt"):
+def load_parameters(filename=parameter_file):
     """
     Load the keyboard and beamer contours from a text file.
     """
@@ -118,8 +116,6 @@ def load_parameters(filename="calibration_params.txt"):
                 section = "keyboard"
             elif line == "Beamer Contour:":
                 section = "beamer"
-            elif line == "Camera Distortion:":
-                section = "distortion"
             elif section == "keyboard":
                 if line:
                     x, y = map(int, line.split(","))
@@ -128,8 +124,14 @@ def load_parameters(filename="calibration_params.txt"):
                 if line:
                     x, y = map(int, line.split(","))
                     beamer_contour.append((x, y))
-            elif section == "distortion":
-                if line:
-                    camera_distortion.append(float(line))
+
+    if os.path.exists("camera_calibration.npz"):
+        data = np.load("camera_calibration.npz")
+        camera_distortion = {
+            "mtx": data["mtx"],
+            "dist": data["dist"],
+            "rvecs": data["rvecs"],
+            "tvecs": data["tvecs"]
+        }
 
     return keyboard_contour, beamer_contour, camera_distortion
