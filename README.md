@@ -48,3 +48,4 @@ Will need to be tested.
 
 Keyboard bounding box is kinda slow (needs to iterate over 90degree turning)
 
+Current camera is fisheye, which is shit. need to either find transform to undo or use another camera.

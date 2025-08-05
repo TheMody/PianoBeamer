@@ -1,3 +1,4 @@
+from json import load
 from pathlib import Path
 from flask import (
     Flask, render_template, request,
@@ -8,8 +9,12 @@ from main import setup_and_calibrate, play_song, recalibrate
 from collections import deque
 import builtins, functools
 import numpy as np
+import os
 import cv2
 import io
+from config import parameter_file, NUM_KEYS
+from utils import save_parameters, load_parameters
+from keyboard_vis_cv import PianoKeyboardCV
 from download_midi import download_first_midi
 # ----------------------------------
 # CONFIG ---------------------------------------------------------------
@@ -37,11 +42,20 @@ def tee_print(*args, **kwargs):
 builtins.print = tee_print   
 latest_snapshot = None 
 
-
-edge_sets = {
-    "keyboard":  [(10, 10), (630, 10), (630, 470), (10, 470)],   # default
-    "beamer":    [(20, 20), (620, 30), (620, 460), (30, 460)],
-}
+if os.path.exists(parameter_file):
+    print(f"Loading parameters from {parameter_file}")
+    keyboard_contour, beamer_contour, camera_distortion  = load_parameters()  # load initial parameters if available
+    edge_sets = {
+        "keyboard": keyboard_contour,
+        "beamer":   beamer_contour,
+    }
+    kb = PianoKeyboardCV(start_midi=21, num_keys=NUM_KEYS)
+    recalibrate(kb, keyboard_contour, beamer_contour)
+else:
+    edge_sets = {
+        "keyboard":  [(10, 10), (630, 10), (630, 470), (10, 470)],   # default
+        "beamer":    [(20, 20), (620, 30), (620, 460), (30, 460)],
+    }
 
 # --- helper to JSON-serialize tuples --------------------------------
 def _as_dict():

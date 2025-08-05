@@ -81,3 +81,55 @@ def visualize_keyboard_and_beamer(image,keyboard_contour,beamer_contour):
     # cv2.imshow("Keyboard and Beamer Contours", display_img)
     # cv2.waitKey(0)
     # cv2.destroyAllWindows()
+
+
+def save_parameters(keyboard_contour, beamer_contour,camera_distortion = None, filename="calibration_params.txt"):
+    """
+    Save the keyboard and beamer contours to a text file.
+    """
+    with open(filename, "w") as f:
+        f.write("Keyboard Contour:\n")
+        for pt in keyboard_contour:
+            f.write(f"{pt[0]},{pt[1]}\n")
+        
+        f.write("\nBeamer Contour:\n")
+        for pt in beamer_contour:
+            f.write(f"{pt[0]},{pt[1]}\n")
+
+        if camera_distortion is not None:
+            f.write("\nCamera Distortion:\n")
+            for param in camera_distortion:
+                f.write(f"{param}\n")
+
+def load_parameters(filename="calibration_params.txt"):
+    """
+    Load the keyboard and beamer contours from a text file.
+    """
+    keyboard_contour = []
+    beamer_contour = []
+    camera_distortion = []
+
+    with open(filename, "r") as f:
+        lines = f.readlines()
+        section = None
+        for line in lines:
+            line = line.strip()
+            if line == "Keyboard Contour:":
+                section = "keyboard"
+            elif line == "Beamer Contour:":
+                section = "beamer"
+            elif line == "Camera Distortion:":
+                section = "distortion"
+            elif section == "keyboard":
+                if line:
+                    x, y = map(int, line.split(","))
+                    keyboard_contour.append((x, y))
+            elif section == "beamer":
+                if line:
+                    x, y = map(int, line.split(","))
+                    beamer_contour.append((x, y))
+            elif section == "distortion":
+                if line:
+                    camera_distortion.append(float(line))
+
+    return keyboard_contour, beamer_contour, camera_distortion

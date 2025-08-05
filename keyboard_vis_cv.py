@@ -238,7 +238,7 @@ RED   = (0,   0, 255)
 
 
 
-def animate(events, keyboard, lookahead=0.5,playback_speed = 1, window_name='Piano'):
+def animate(events, keyboard, lookahead=0.5,playback_speed = 1.0, window_name='Piano'):
     """
     Realtime visualiser
         • GREEN – notes currently sounding

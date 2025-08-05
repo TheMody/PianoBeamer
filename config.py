@@ -25,3 +25,4 @@ WHITE_KEYS_COLOR = (0,0,255)
 LEADTIME_SONG = 2.0
 WEBCAM_ID = 0
 test = False
+parameter_file = "calibration_params.txt"
