@@ -46,7 +46,8 @@ latest_snapshot = None
 
 if os.path.exists(parameter_file):
     print(f"Loading parameters from {parameter_file}")
-    keyboard_contour, beamer_contour, camera_distortion  = load_parameters()  # load initial parameters if available
+    keyboard_contour, beamer_contour  = load_parameters()  # load initial parameters if available
+    print(keyboard_contour, beamer_contour)
     edge_sets = {
         "keyboard": keyboard_contour,
         "beamer":   beamer_contour,
@@ -72,7 +73,7 @@ def event_one():
     kb,latest_snapshot, keyboard_edges, beamer_edges  = setup_and_calibrate()
     edge_sets['keyboard'] = keyboard_edges
     edge_sets['beamer'] = beamer_edges
-   # save_parameters(keyboard_edges, beamer_edges)  # save the updated parameters
+    save_parameters(keyboard_edges, beamer_edges)  # save the updated parameters
   #  print("Camera and beamer setup calibrated successfully.")
     pass
 
@@ -175,7 +176,7 @@ def update_edge_points():
     edge_sets['beamer']   = [(p['x'], p['y']) for p in data['beamer']]
 
     recalibrate(kb, edge_sets['keyboard'], edge_sets['beamer'])
-    save_parameters(data['keyboard'], data['beamer'])  # save the updated parameters
+    save_parameters(edge_sets['keyboard'], edge_sets['beamer'])  # save the updated parameters
    # flash("Edge points updated ✔", "success")
     return {"ok": True}
 

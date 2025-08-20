@@ -108,6 +108,7 @@ def save_parameters(keyboard_contour, beamer_contour, filename=parameter_file):
     """
     Save the keyboard and beamer contours to a text file.
     """
+    #print(keyboard_contour, beamer_contour)
     with open(filename, "w") as f:
         f.write("Keyboard Contour:\n")
         for pt in keyboard_contour:
@@ -137,20 +138,12 @@ def load_parameters(filename=parameter_file):
                 section = "beamer"
             elif section == "keyboard":
                 if line:
-                    x, y = map(int, line.split(","))
+                    x, y = map(float, line.split(","))
                     keyboard_contour.append((x, y))
             elif section == "beamer":
                 if line:
-                    x, y = map(int, line.split(","))
+                    x, y = map(float, line.split(","))
                     beamer_contour.append((x, y))
 
-    if os.path.exists("camera_calibration.npz"):
-        data = np.load("camera_calibration.npz")
-        camera_distortion = {
-            "mtx": data["mtx"],
-            "dist": data["dist"],
-            "rvecs": data["rvecs"],
-            "tvecs": data["tvecs"]
-        }
 
-    return keyboard_contour, beamer_contour, camera_distortion
+    return keyboard_contour, beamer_contour
