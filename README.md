@@ -26,7 +26,7 @@ pip install mido torch opencv transformers Flask
    Place the USB camera next to the beamer, also pointing down at the keyboard.
 
    Example setup:
-   ![Setup](images/setup_img.png)
+   ![Setup](images/Setup.png)
 
 2. **Start the web application**
 

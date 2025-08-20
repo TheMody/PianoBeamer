@@ -169,6 +169,8 @@ def get_edge_points():
 def update_edge_points():
     global kb, edge_sets
     data = request.json
+    if not data or not isinstance(data, dict):
+        return {"error": "Invalid data format"}, 400
     edge_sets['keyboard'] = [(p['x'], p['y']) for p in data['keyboard']]
     edge_sets['beamer']   = [(p['x'], p['y']) for p in data['beamer']]
 
