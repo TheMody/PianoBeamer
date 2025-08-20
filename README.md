@@ -1,51 +1,75 @@
 # PianoBeamer
 
-Turn your old fashioned piano into a fancy new one. All you need is a USB Camera and a Beamer. Both should be placed above the piano looking down and have a good view on the keyboard. 
+**Turn your acoustic or digital piano into an interactive learning tool.**
+With just a USB camera and a beamer (projector), you can project visual cues directly onto your keyboard, guiding you through any chosen song.
 
-The code base then uses fancy AI tools to detect the keyboard. Then the Beamer projects instructions onto you keyboard which tells you how to play your choosen song.
+The system uses computer vision and AI to automatically detect your keyboard and align the projector output. If the automatic calibration isn’t perfect, you can manually adjust the detection areas for optimal accuracy.
 
-This code base includes a web app, so you can use your phone too controll which music is projected. It should also work with a raspberry pi, as the computer hosting this. Which enables you to make it all plug and play.
+A built-in web application lets you control playback conveniently from your phone or tablet. The system also runs on a Raspberry Pi, making it fully plug-and-play.
 
-# Install
+---
 
-Use pip to install all needed python packages.
+## Installation
 
-```
-pip install mido torch opencv transformers Flask albumentations
-```
-# Usage
+Install the required Python packages with:
 
-Run:
-
-```
-python app.py
+```bash
+pip install mido torch opencv transformers Flask
 ```
 
-Then go to 127.0.0.1:5000 or wherever Flask tells you your site is hosted.
+---
 
-# Current status:
+## Usage
 
--Detect Keyboard - Done
+1. **Hardware setup**
+   Position your beamer above the piano/keyboard, pointing straight down.
+   Place the USB camera next to the beamer, also pointing down at the keyboard.
+
+   Example setup:
+   ![Setup](images/setup_img.png)
+
+2. **Start the web application**
+
+   ```bash
+   python app.py
+   ```
+
+   Open [http://127.0.0.1:5000](http://127.0.0.1:5000) (or the address shown in the Flask output) in your browser.
+
+3. **(Optional) Camera undistortion**
+   If your camera introduces a fisheye effect, print the calibration pattern:
+   ![Calibration Pattern](images/calibration_pattern.png)
+
+   Affix it to a flat surface (e.g., cardboard or a book) and run the **Undistort Camera** option in the web app.
+
+4. **Calibration**
+   Click **Setup & Calibrate** to detect the beamer projection area and the keyboard area.
+   Verify that both bounding boxes are placed sensibly in the displayed calibration image. You can manually adjust the edges if needed.
+
+5. **Play a song**
+   Choose a song and playback speed in the web interface. The beamer will project the notes directly onto your keys—just follow along!
+
+> **Note:** Calibration and undistortion only need to be done once. Settings are saved and reused on subsequent startups. If you move the beamer or camera, you’ll need to recalibrate.
+
+---
+
+## Current Features
+
+* ✅ Automatic keyboard detection
+* ✅ Projection of marker images & marker detection
+* ✅ Transformation between keyboard space and image space
+* ✅ Virtual keyboard with individually colorable keys
+* ✅ MIDI song parsing and playback
+* ✅ Web application interface
+* ✅ Camera undistortion support
+
+Examples:
 ![Keyboard Detection](images/keyboard_beamer_contours.png)
 
--Project Marker Image and detect Markers - Done
+---
 
--Transformer between keyboard space and image space - Done
+## Improvements Planned
 
--Create a virtual keyboard, with each button individually colorable - Done 
+* Reduce small projection errors
+* Investigate individual key detection (challenging but ideal)
 
--Read in Music -Done
-
--Create Webserver -Done
-
-First working Version:
-
--14.7.2025
-
-
-# Improvements
-Will need to be tested.
-
-Keyboard bounding box is kinda slow (needs to iterate over 90degree turning)
-
-Current camera is fisheye, which is shit. need to either find transform to undo or use another camera.
