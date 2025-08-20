@@ -64,7 +64,7 @@ pip install mido torch opencv transformers Flask
 * ✅ Camera undistortion support
 
 Examples:
-![Keyboard Detection](images/keyboard_beamer_contours.png)
+![Keyboard Detection](images/keyboard_beamer_contours_current.png)
 
 ---
 
