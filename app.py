@@ -16,6 +16,8 @@ from config import parameter_file, NUM_KEYS
 from utils import save_parameters, load_parameters
 from keyboard_vis_cv import PianoKeyboardCV
 from download_midi import download_first_midi
+from camera_undistort import undistort_camera
+
 # ----------------------------------
 # CONFIG ---------------------------------------------------------------
 # ----------------------------------------------------------------------
@@ -63,7 +65,6 @@ def _as_dict():
 
 # ----------------------------------
 # DOMAIN-LEVEL “EVENT” FUNCTIONS --------------------------------------
-# (leave bodies empty for now – insert real logic later)
 # ----------------------------------------------------------------------
 def event_one():
     """Placeholder for first button."""
@@ -71,10 +72,13 @@ def event_one():
     kb,latest_snapshot, keyboard_edges, beamer_edges  = setup_and_calibrate()
     edge_sets['keyboard'] = keyboard_edges
     edge_sets['beamer'] = beamer_edges
+    save_parameters(keyboard_edges, beamer_edges)  # save the updated parameters
+  #  print("Camera and beamer setup calibrated successfully.")
     pass
 
 def event_two():
     """Placeholder for second button."""
+    undistort_camera()
     pass
 
 def process_file(file_path: Path, speed: float = 1.0):
@@ -136,7 +140,7 @@ def trigger(name):
             flash("Calibrated camera and beamer setup.", "success")
         case "event_two":
             event_two()
-            flash("Event 2 executed.", "success")
+            flash("Undistort Successfull", "success")
         case _:
             flash(f"Unknown event {name!r}", "error")
     return redirect(url_for("index"))

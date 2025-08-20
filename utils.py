@@ -30,7 +30,20 @@ def list_available_cams(max_index: int = 10, backend=cv2.CAP_ANY) -> list[int]:
         cap.release()
     return found
 
-def capture_img(cam_index: int = 4, backend = cv2.CAP_ANY): #cv2.CAP_ANY):
+def undistort_image(img, mtx,dist):
+    # undistort
+    h,  w = img.shape[:2]
+    newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w,h), 1, (w,h))
+    dst = cv2.undistort(img, mtx, dist, None, newcameramtx)
+    
+    # crop the image
+    x, y, w, h = roi
+    dst = dst[y:y+h, x:x+w]
+
+    return dst
+    #cv2.imwrite('calibresult.png', dst)
+
+def capture_img(cam_index: int = 4, backend = cv2.CAP_ANY, undistort = True): #cv2.CAP_ANY):
     # 1. Open the device in the constructor
     cap = cv2.VideoCapture(cam_index, backend)
 
@@ -51,6 +64,12 @@ def capture_img(cam_index: int = 4, backend = cv2.CAP_ANY): #cv2.CAP_ANY):
             raise RuntimeError("Failed to grab frame")
         
         print("captured image of shape",frame.shape)
+        # 3. Optionally, undistort the image if camera parameters are available
+        if os.path.exists("camera_calibration.npz") and undistort:
+            data = np.load("camera_calibration.npz")
+            mtx = data["mtx"]
+            dist = data["dist"]
+            frame = undistort_image(frame, mtx, dist)
         return frame
     finally:
         cap.release()
@@ -85,7 +104,7 @@ def visualize_keyboard_and_beamer(image,keyboard_contour,beamer_contour):
     # cv2.destroyAllWindows()
 
 
-def save_parameters(keyboard_contour, beamer_contour,camera_distortion = None, filename=parameter_file):
+def save_parameters(keyboard_contour, beamer_contour, filename=parameter_file):
     """
     Save the keyboard and beamer contours to a text file.
     """

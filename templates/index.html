@@ -42,7 +42,12 @@
           <div class="card-body d-grid gap-2">
             <h5 class="card-title">System Controls</h5>
             <form action="{{ url_for('trigger', name='event_one') }}" method="post">
-              <button class="btn btn-primary w-100" type="submit">Setup &amp; Calibrate</button>
+              <button class="btn btn-primary w-100" type="submit">Setup &amp; Calibrate Beamer Setup</button>
+            </form>
+
+            <h5 class="card-title">System Controls</h5>
+            <form action="{{ url_for('trigger', name='event_two') }}" method="post">
+              <button class="btn btn-primary w-100" type="submit">Undistort Camera</button>
             </form>
 
             <!-- URL submission -->
@@ -111,7 +116,7 @@
               <!-- overlay fills exactly the snapshot’s client rectangle may need to change viewbox size-->
               <svg id="overlay"
                   class="position-absolute top-0 start-0 w-100 h-100"
-                  viewBox="0 0 1280 720"          
+                  viewBox="0 0 1280 780"          
                   preserveAspectRatio="none">
               </svg>
             </div>
@@ -266,5 +271,38 @@ function initOverlay() {
 ovr?.addEventListener("pointerdown", startDrag);
 window.addEventListener("load", initOverlay);
       </script>
+      <script>
+  function syncOverlayViewBox() {
+    const img = document.getElementById('snapshot');
+    const svg = document.getElementById('overlay');
+    if (!img || !svg) return;
+
+    // Use the image's native pixel size
+    const w = img.naturalWidth;
+    const h = img.naturalHeight;
+    if (w && h) {
+      svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+    }
+  }
+
+  // Run whenever the snapshot image finishes loading
+  const snapshotEl = document.getElementById('snapshot');
+  if (snapshotEl) {
+    snapshotEl.addEventListener('load', syncOverlayViewBox);
+  }
+
+  // Also run once on initial page load (in case image cached fast)
+  window.addEventListener('load', syncOverlayViewBox);
+
+  // If you call this elsewhere to refresh the image, the 'load' handler above
+  // will fire and resync the viewBox automatically.
+  function refreshSnapshot() {
+    const img = document.getElementById('snapshot');
+    if (img) {
+      img.src = "{{ url_for('snapshot') }}?t=" + Date.now(); // cache-bust
+      // no need to call syncOverlayViewBox() here; the 'load' event will do it
+    }
+  }
+</script>
 </body>
 </html>

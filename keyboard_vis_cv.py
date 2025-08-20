@@ -320,7 +320,7 @@ def animate(events, keyboard, lookahead=0.5,playback_speed = 1.0, window_name='P
 def main():
 
 
-    midi = mido.MidiFile("midi_files/Pirate.mid")
+    midi = mido.MidiFile("midi_files/AirinDMinor.mid")
     events = extract_events(midi)
 
     kb = PianoKeyboardCV(start_midi=21, num_keys=NUM_KEYS)
