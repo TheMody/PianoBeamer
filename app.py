@@ -72,7 +72,7 @@ def event_one():
     kb,latest_snapshot, keyboard_edges, beamer_edges  = setup_and_calibrate()
     edge_sets['keyboard'] = keyboard_edges
     edge_sets['beamer'] = beamer_edges
-    save_parameters(keyboard_edges, beamer_edges)  # save the updated parameters
+   # save_parameters(keyboard_edges, beamer_edges)  # save the updated parameters
   #  print("Camera and beamer setup calibrated successfully.")
     pass
 
@@ -173,6 +173,7 @@ def update_edge_points():
     edge_sets['beamer']   = [(p['x'], p['y']) for p in data['beamer']]
 
     recalibrate(kb, edge_sets['keyboard'], edge_sets['beamer'])
+    save_parameters(data['keyboard'], data['beamer'])  # save the updated parameters
    # flash("Edge points updated ✔", "success")
     return {"ok": True}
 
