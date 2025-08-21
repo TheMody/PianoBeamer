@@ -82,6 +82,14 @@ def setup_and_calibrate(test = test):
             corners = detect_four_markers(combined_image)#,background_img=image*0.9)
         else:
             corners = detect_beamer_area(combined_image, image)
+
+        #check if beamer corners make sense
+        for point in corners:
+            if point[0] > image.shape[1] or point[0] < 0:
+                point[0] = max(0, min(point[0], image.shape[1]-1))
+            if point[1] > image.shape[0] or point[1] < 0:
+                point[1] = max(0, min(point[1], image.shape[0]-1))
+        
         print("detected beamer view, if this is not correct, please adjust the beamer bounding box manually")
 
         #these are the corner coordinates for the beamer to display the keyboard

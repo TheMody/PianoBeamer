@@ -61,7 +61,7 @@ def detect_four_markers(
         dict_name: int = aruco.DICT_4X4_50,
         expected_ids: set[int] | None = None,
         refine_subpix: bool = True
-) -> dict[int, tuple[float, float]]:
+):
     """
     Detects the four markers drawn by `create_four_marker_image`
     and returns a dict {marker_id: (cx, cy)} with sub-pixel centres.

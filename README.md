@@ -9,6 +9,12 @@ A built-in web application lets you control playback conveniently from your phon
 
 ---
 
+## Short Demo
+
+https://github.com/TheMody/PianoBeamer/images/demo.mp4
+
+---
+
 ## Installation
 
 Install the required Python packages with:
