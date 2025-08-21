@@ -1,0 +1,14 @@
+Timeline of the Video:
+Intro Logo
+Awesome teaser shot
+Explaining the Concept (Concept Diagramm)
+How it looks in Practice
+Challenges:
+1. Getting the AI to recognize the keyboard
+2. Getting the System to recognize the light up area (suprisingly difficult)
+-> should work now -> still shit
+3. Undistorting the camera
+-> works much better now
+
+Show the App.
+Final Shot
