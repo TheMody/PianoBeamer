@@ -1,0 +1,15 @@
+Timeline of the Video:
+Awesome teaser shot (TODO shoot a better one)
+Intro Logo
+Motivation
+Explaining the Concept (Concept Diagramm)
+How it looks in Practice (TODO shoot this)
+Challenges:
+1. Getting the AI to recognize the keyboard (show code with screen grab)
+2. Getting the System to recognize the light up area (suprisingly difficult) (also show code etc)
+-> should work now -> still shit
+3. Undistorting the camera
+-> works much better now
+
+Show the App.
+Final Shot
