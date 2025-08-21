@@ -8,13 +8,10 @@ The system uses computer vision and AI to automatically detect your keyboard and
 A built-in web application lets you control playback conveniently from your phone or tablet. The system also runs on a Raspberry Pi, making it fully plug-and-play.
 
  ![Demo](images/Demo.GIF)
+ 
 ---
 
-## Short Demo
 
-https://github.com/TheMody/PianoBeamer/images/demo.mp4
-
----
 
 ## Installation
 
