@@ -96,7 +96,7 @@ def setup_and_calibrate(test = test):
         keyboard_contour = detect_keyboard_and_postprocess(image)
         if keyboard_contour is None:
             print("Error: Could not detect keyboard in the image. Please adjust the keyboard bounding box manually.")
-            keyboard_contour = np.array([[0,0], [b_width/2, 0], [b_width/2, b_height/2], [0, b_height/2]], dtype=np.float32)
+            keyboard_contour = np.array([[0,0], [b_width/2, 0], [b_width/2, b_height/2], [0, b_height/2]], dtype=np.int32)
         else:
             print("detected keyboard contour")
 
